@@ -1,12 +1,12 @@
-# Inventory Under Constraint
+# Inventory Replenishment Under a Capacity Limit
 
-## Decision summary
+## Results
 
-Using the same 7,060-unit weekly capacity, the marginal optimizer reduced holdout scenario cost by **13.5%** relative to proportional allocation. Its demand fill rate was **65.0%**, compared with **56.7%** for the baseline.
+Using the same 7,060-unit weekly capacity, the marginal optimizer reduced holdout modeled cost by **13.5%** relative to proportional allocation. Its demand fill rate was **65.0%**, compared with **56.7%** for the baseline.
 
 Across the forecast baselines, **Exponential smoothing** performed best with **50.8% WAPE** on the final 12 weeks.
 
-## What was optimized
+## Model
 
 For each SKU, weekly demand is represented by its empirical training distribution. The decision balances holding cost for leftover units against shortage cost for unmet demand:
 
@@ -16,7 +16,7 @@ Because each SKU's empirical expected-cost curve is discrete convex, allocating 
 
 ## Policy comparison
 
-| Policy | Units | Fill rate | Stockout SKU-weeks | Holding cost | Shortage cost | Scenario cost |
+| Policy | Units | Fill rate | Stockout SKU-weeks | Holding cost | Shortage cost | Modeled cost |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Newsvendor unconstrained | 8,306 | 70.5% | 19.6% | £9,529 | £13,413 | £22,942 |
 | Optimized under capacity | 7,060 | 65.0% | 25.0% | £7,409 | £16,800 | £24,209 |
@@ -36,25 +36,24 @@ Because each SKU's empirical expected-cost curve is discrete convex, allocating 
 | 84879 | ASSORTED COLOUR BIRD ORNAMENT | 588 | 740 | +152 |
 | 22386 | JUMBO BAG PINK POLKADOT | 334 | 478 | +144 |
 
-## Why the largest shift matters
+## Outlier check
 
-SKU `23166` contains a 74,215-unit training week, versus a typical positive week of 81.5 units (911x larger). That one event pulls its training mean to 1,806.7 units and causes the proportional-mean baseline to reserve 1,899 units every week. The empirical optimizer assigns 82 instead because a rare bulk order does not justify permanent capacity under the stated cost assumptions.
+SKU `23166` contains a 74,215-unit training week, versus a typical positive week of 81.5 units (911x larger). That one event pulls its training mean to 1,806.7 units and causes the proportional-mean baseline to reserve 1,899 units every week. The empirical optimizer assigns 82 instead.
 
-Operationally, the spike should be investigated rather than deleted automatically. If it was a known wholesale order, it belongs in a separate event/order channel; if it was an error, it belongs in source-data QA. Either way, a routine replenishment forecast should not treat it as ordinary weekly demand.
+I would flag this product before using it in a recurring forecast. A confirmed wholesale order should be modeled separately; a source-data error should be corrected upstream.
 
-## Evidence boundaries
+## Inputs and assumptions
 
 - Source: UCI Online Retail II, sheet `Year 2010-2011`, filtered to `United Kingdom`.
 - Train / holdout split: 42 / 12 weekly periods, in chronological order.
-- Holding cost is a scenario assumption of 5.0% of unit price per leftover unit-week.
-- Shortage cost is a scenario assumption of 30.0% of unit price per unmet unit.
+- Holding cost: 5.0% of unit price per leftover unit-week.
+- Shortage cost: 30.0% of unit price per unmet unit.
 - Unit price is observed; procurement cost, lead time, margin, shelf life, and service contracts are not.
-- A fixed weekly order-up-to quantity is evaluated against holdout demand. This is a decision lab, not a production inventory recommendation.
 - Product selection uses training-period activity and revenue only; holdout outcomes do not select SKUs.
 
-## Next operational questions
+## Follow-up tests
 
-1. How does the allocation change under supplier-specific lead times and case-pack constraints?
-2. Which SKUs retain priority across plausible holding/shortage cost scenarios?
-3. Does a rolling demand distribution outperform a fixed training distribution after demand shifts?
-4. What service-level commitments justify reserving capacity for low-volume, high-value SKUs?
+1. Add supplier lead times and case-pack constraints.
+2. Vary the holding and shortage rates.
+3. Compare the fixed training distribution with a rolling window.
+4. Add product-level service targets.

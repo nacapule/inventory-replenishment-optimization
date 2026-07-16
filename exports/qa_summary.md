@@ -11,4 +11,4 @@
 - Holdout weeks: 12
 - Selected SKUs: 20
 
-Returns and cancellations are excluded from demand rather than silently netted against sales. That makes the demand target interpretable, while the exclusion count remains visible for review.
+Demand is calculated from positive sale lines. Returns and cancellations are excluded and counted above.

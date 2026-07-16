@@ -1,77 +1,78 @@
-# Inventory Under Constraint
+# Inventory Replenishment Under a Capacity Limit
 
-This project turns real retail transactions into a weekly replenishment decision:
-
-> When inventory capacity is limited, which products should receive the next unit,
-> and what service/cost tradeoff does that decision create?
-
-It cleans one year of UCI Online Retail II transactions, selects recurring products using
-training data only, backtests three simple forecast baselines, and solves a capacity-constrained
-empirical newsvendor problem. The final outputs are a policy comparison, SKU-level allocation,
-SQLite analysis database, visual summary, and an evidence-bounded decision report.
+This project compares weekly inventory-allocation policies on one year of UCI Online Retail
+II data. It cleans the transactions, selects 20 recurring products from the training period,
+compares three demand forecasts, and allocates a 7,060-unit weekly capacity with an empirical
+newsvendor model.
 
 ![Decision summary](exports/decision_summary.svg)
 
-## Result snapshot
+## Results
 
-On the final 12 held-out weeks, the capacity-constrained optimizer reduced scenario cost
-by **13.5%** relative to proportional mean allocation while raising fill rate from **56.7%**
-to **65.0%**, using the same 7,060-unit weekly capacity.
+On the final 12 weeks, the optimized allocation had a modeled cost of **£24,209**, compared
+with **£27,972** for proportional mean allocation. Both policies used 7,060 units per week.
+Fill rate increased from **56.7%** to **65.0%**.
 
-The largest reallocation exposes a practical failure mode in mean-based planning. One SKU
-contains a single 74,215-unit training week while its typical positive week is about 82 units.
-The proportional baseline reserves 1,899 units every week; the empirical optimizer assigns 82.
-The right operational response is not to erase the event, but to determine whether it was a
-known wholesale order or a data-quality problem and route it outside routine replenishment.
+The largest change was SKU 23166. Its training data contains one 74,215-unit week, while
+its median positive week is about 82 units. That single order pushes the mean high enough
+for the proportional baseline to assign 1,899 units every week. The optimizer assigns 82.
+Before using this SKU in a recurring forecast, I would check whether the large order was a
+wholesale event or a source-data error.
 
-Full interpretation and assumptions: [exports/insight_report.md](exports/insight_report.md).
+The full tables are in [exports/insight_report.md](exports/insight_report.md).
 
-## Decision model
+## Model
 
-For each SKU, the model minimizes expected weekly overage and underage cost:
+For each SKU, the model minimizes expected weekly overage and shortage cost:
 
-`min Σ hᵢ E[(qᵢ-Dᵢ)⁺] + pᵢ E[(Dᵢ-qᵢ)⁺]`
+    min Σ hᵢ E[(qᵢ-Dᵢ)⁺] + pᵢ E[(Dᵢ-qᵢ)⁺]
 
-subject to a shared integer capacity: `Σ qᵢ ≤ C`.
+subject to Σ qᵢ ≤ C and integer order quantities.
 
-Each empirical SKU cost curve is discrete convex, so the constrained solution is built by
-assigning the next unit wherever it creates the greatest marginal expected-cost reduction.
-The test suite checks this optimizer against brute-force enumeration on a small instance.
+Each empirical cost curve is discrete convex. The algorithm assigns each additional unit
+to the SKU with the largest marginal cost reduction. A unit test compares the result with
+brute-force enumeration on a small case.
 
-## Reproduce
+## Run
 
-```bash
+~~~bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 make data
 make test
 make analyze
-```
+~~~
 
-The raw 43.5 MB workbook is downloaded from UCI and ignored by Git. The generated CSV,
-Markdown, SVG, and SQL-query files are small and reviewable. `exports/replenishment.db` is
-also generated locally and ignored.
+The make data command downloads the 43.5 MB workbook from UCI. The raw workbook and
+generated SQLite database are ignored by Git.
 
-## Outputs
+## Files
 
-- `exports/insight_report.md` - findings, policy comparison, assumptions, and next questions
-- `exports/decision_summary.svg` - compact visual of costs, forecasts, and reallocations
-- `exports/policy_comparison.csv` - holdout policy metrics
-- `exports/sku_decisions.csv` - SKU demand statistics and allocation decisions
-- `exports/forecast_metrics.csv` - chronological 12-week forecast backtest
-- `exports/qa_summary.md` - explicit source, exclusion, split, and selection counts
-- `exports/replenishment.db` - generated SQLite database for independent analysis
-- `sql/analysis_queries.sql` - human-readable queries against the generated database
+- exports/insight_report.md - results, policy comparison, and model inputs
+- exports/decision_summary.svg - chart of costs, forecasts, and allocation changes
+- exports/policy_comparison.csv - results for the four allocation policies
+- exports/sku_decisions.csv - product-level demand statistics and order quantities
+- exports/forecast_metrics.csv - 12-week forecast backtest
+- exports/qa_summary.md - row counts and train/test split
+- exports/replenishment.db - generated SQLite database
+- sql/analysis_queries.sql - example queries for the generated database
 
-## Evidence boundaries
+## Inputs and assumptions
 
-This is a decision lab, not a production inventory recommendation. UCI provides selling price
-but not procurement cost, lead time, margin, case-pack size, shelf life, or service commitments.
-Holding and shortage costs are therefore explicit scenario assumptions. Returns and cancellations
-are excluded from positive demand and reported separately rather than silently netted against sales.
+- The analysis uses the Year 2010-2011 sheet and United Kingdom transactions.
+- Products are selected using training-period activity and revenue only.
+- Selling price is in the dataset; procurement cost, margin, lead time, case packs, and
+  service targets are not.
+- Holding cost is set to 5% of selling price per leftover unit-week.
+- Shortage cost is set to 30% of selling price per unmet unit.
+- Returns and cancellations are removed before weekly demand is calculated and are counted
+  in the QA summary.
 
-## Data attribution
+The 13.5% cost reduction depends on the two cost rates above. Both are command-line
+arguments, so they can be changed for sensitivity testing.
+
+## Data
 
 Daqing Chen (2012), *Online Retail II*, UCI Machine Learning Repository.
-[DOI 10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D). The dataset is licensed CC BY 4.0.
+[DOI 10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D). CC BY 4.0.

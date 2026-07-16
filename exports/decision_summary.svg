@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
 <rect width="1200" height="820" fill="#f7f4ed"/>
-<text x="64" y="66" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#17212b">Inventory under constraint</text>
-<text x="64" y="98" font-family="Arial, sans-serif" font-size="17" fill="#64717b">Forecast backtest and empirical newsvendor allocation · final 12 weeks held out</text>
+<text x="64" y="66" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#17212b">Inventory replenishment under a capacity limit</text>
+<text x="64" y="98" font-family="Arial, sans-serif" font-size="17" fill="#64717b">Forecast backtest and constrained allocation · 12-week test set</text>
 <rect x="64" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
 <text x="82" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Weekly capacity</text>
 <text x="82" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">7,060 units</text>
 <rect x="338" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
-<text x="356" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Scenario cost reduction</text>
+<text x="356" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Cost reduction vs. proportional</text>
 <text x="356" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">13.5%</text>
 <rect x="612" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
 <text x="630" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Optimized fill rate</text>
@@ -14,7 +14,7 @@
 <rect x="886" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
 <text x="904" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Selected SKUs</text>
 <text x="904" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">20</text>
-<text x="64" y="282" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Holdout scenario cost</text>
+<text x="64" y="282" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Holdout modeled cost</text>
 <text x="64" y="327" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Newsvendor unconstrained</text>
 <rect x="254" y="310" width="237.5" height="23" rx="4" fill="#2a7f77"/>
 <text x="501.5" y="327" font-family="Arial, sans-serif" font-size="14" fill="#64717b">£22,942</text>
@@ -37,7 +37,7 @@
 <text x="650" y="451" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Historical mean</text>
 <rect x="650" y="461" width="340.0" height="20" rx="4" fill="#234a67" opacity="0.72"/>
 <text x="1000.0" y="477" font-family="Arial, sans-serif" font-size="14" fill="#64717b">78.5%</text>
-<text x="64" y="592" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Largest optimizer reallocations</text>
+<text x="64" y="592" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Largest allocation changes</text>
 <line x1="780" y1="620" x2="780" y2="790" stroke="#d9d5ca" stroke-width="2"/>
 <text x="64" y="639" font-family="Arial, sans-serif" font-size="13" fill="#17212b">23166 · MEDIUM CERAMIC TOP STORAGE JAR</text>
 <rect x="480.0" y="626" width="300.0" height="14" rx="2" fill="#cf6b52"/>

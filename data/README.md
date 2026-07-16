@@ -7,6 +7,4 @@ The analysis uses **Online Retail II** from the UCI Machine Learning Repository:
 - Source: https://archive.ics.uci.edu/dataset/502/online%2Bretail%2Bii
 - License: CC BY 4.0
 
-Run `make data` to download the 43.5 MB archive. Raw data is intentionally ignored
-by Git; generated metrics and the attribution remain reproducible.
-
+Run the make data command to download the 43.5 MB archive. The raw workbook is ignored by Git.

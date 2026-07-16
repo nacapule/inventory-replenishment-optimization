@@ -41,7 +41,7 @@ def _normalized_column(value: object) -> str:
 
 
 def clean_transactions(frame: pd.DataFrame) -> tuple[pd.DataFrame, CleaningSummary]:
-    """Normalize UCI-style retail columns and preserve transparent rejection counts."""
+    """Normalize UCI retail columns and count rejected rows."""
     aliases = {
         "invoice": "invoice",
         "invoiceno": "invoice",
@@ -327,8 +327,8 @@ def write_qa_summary(
         f"- Holdout weeks: {len(demand) - train_weeks:,}",
         f"- Selected SKUs: {len(selected_skus):,}",
         "",
-        "Returns and cancellations are excluded from demand rather than silently netted against sales. "
-        "That makes the demand target interpretable, while the exclusion count remains visible for review.",
+        "Demand is calculated from positive sale lines. Returns and cancellations are excluded "
+        "and counted above.",
         "",
     ]
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -361,19 +361,19 @@ def write_report(
     ).sort_values("shift", key=lambda values: values.abs(), ascending=False).head(8)
 
     lines = [
-        "# Inventory Under Constraint",
+        "# Inventory Replenishment Under a Capacity Limit",
         "",
-        "## Decision summary",
+        "## Results",
         "",
         f"Using the same {capacity:,}-unit weekly capacity, the marginal optimizer reduced "
-        f"holdout scenario cost by **{cost_reduction:.1%}** relative to proportional allocation. "
+        f"holdout modeled cost by **{cost_reduction:.1%}** relative to proportional allocation. "
         f"Its demand fill rate was **{float(optimized['fill_rate']):.1%}**, compared with "
         f"**{float(baseline['fill_rate']):.1%}** for the baseline.",
         "",
         f"Across the forecast baselines, **{best_forecast['method']}** performed best with "
         f"**{float(best_forecast['wape']):.1%} WAPE** on the final {len(test)} weeks.",
         "",
-        "## What was optimized",
+        "## Model",
         "",
         "For each SKU, weekly demand is represented by its empirical training distribution. "
         "The decision balances holding cost for leftover units against shortage cost for unmet demand:",
@@ -386,7 +386,7 @@ def write_report(
         "",
         "## Policy comparison",
         "",
-        "| Policy | Units | Fill rate | Stockout SKU-weeks | Holding cost | Shortage cost | Scenario cost |",
+        "| Policy | Units | Fill rate | Stockout SKU-weeks | Holding cost | Shortage cost | Modeled cost |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in policy_results.itertuples(index=False):
@@ -415,37 +415,33 @@ def write_report(
     lines.extend(
         [
             "",
-            "## Why the largest shift matters",
+            "## Outlier check",
             "",
             f"SKU `{spike['sku']}` contains a {int(spike['train_max']):,}-unit training week, "
             f"versus a typical positive week of {float(spike['train_positive_median']):,.1f} units "
             f"({float(spike['spike_ratio']):,.0f}x larger). That one event pulls its training mean "
             f"to {float(spike['train_mean']):,.1f} units and causes the proportional-mean baseline "
             f"to reserve {int(spike['proportional_qty']):,} units every week. The empirical optimizer "
-            f"assigns {int(spike['optimized_qty']):,} instead because a rare bulk order does not justify "
-            "permanent capacity under the stated cost assumptions.",
+            f"assigns {int(spike['optimized_qty']):,} instead.",
             "",
-            "Operationally, the spike should be investigated rather than deleted automatically. If it "
-            "was a known wholesale order, it belongs in a separate event/order channel; if it was an "
-            "error, it belongs in source-data QA. Either way, a routine replenishment forecast should not "
-            "treat it as ordinary weekly demand.",
+            "I would flag this product before using it in a recurring forecast. A confirmed wholesale "
+            "order should be modeled separately; a source-data error should be corrected upstream.",
             "",
-            "## Evidence boundaries",
+            "## Inputs and assumptions",
             "",
             f"- Source: UCI Online Retail II, sheet `{sheet}`, filtered to `{country}`.",
             f"- Train / holdout split: {len(train)} / {len(test)} weekly periods, in chronological order.",
-            f"- Holding cost is a scenario assumption of {holding_rate:.1%} of unit price per leftover unit-week.",
-            f"- Shortage cost is a scenario assumption of {shortage_rate:.1%} of unit price per unmet unit.",
+            f"- Holding cost: {holding_rate:.1%} of unit price per leftover unit-week.",
+            f"- Shortage cost: {shortage_rate:.1%} of unit price per unmet unit.",
             "- Unit price is observed; procurement cost, lead time, margin, shelf life, and service contracts are not.",
-            "- A fixed weekly order-up-to quantity is evaluated against holdout demand. This is a decision lab, not a production inventory recommendation.",
             "- Product selection uses training-period activity and revenue only; holdout outcomes do not select SKUs.",
             "",
-            "## Next operational questions",
+            "## Follow-up tests",
             "",
-            "1. How does the allocation change under supplier-specific lead times and case-pack constraints?",
-            "2. Which SKUs retain priority across plausible holding/shortage cost scenarios?",
-            "3. Does a rolling demand distribution outperform a fixed training distribution after demand shifts?",
-            "4. What service-level commitments justify reserving capacity for low-volume, high-value SKUs?",
+            "1. Add supplier lead times and case-pack constraints.",
+            "2. Vary the holding and shortage rates.",
+            "3. Compare the fixed training distribution with a rolling window.",
+            "4. Add product-level service targets.",
             "",
         ]
     )
@@ -479,13 +475,13 @@ def write_svg(
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         f'<rect width="{width}" height="{height}" fill="{background}"/>',
-        f'<text x="64" y="66" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="{ink}">Inventory under constraint</text>',
-        f'<text x="64" y="98" font-family="Arial, sans-serif" font-size="17" fill="{muted}">Forecast backtest and empirical newsvendor allocation · final 12 weeks held out</text>',
+        f'<text x="64" y="66" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="{ink}">Inventory replenishment under a capacity limit</text>',
+        f'<text x="64" y="98" font-family="Arial, sans-serif" font-size="17" fill="{muted}">Forecast backtest and constrained allocation · 12-week test set</text>',
     ]
 
     cards = [
         ("Weekly capacity", f"{capacity:,} units"),
-        ("Scenario cost reduction", f"{reduction:.1%}"),
+        ("Cost reduction vs. proportional", f"{reduction:.1%}"),
         ("Optimized fill rate", f"{float(optimized['fill_rate']):.1%}"),
         ("Selected SKUs", f"{len(decisions):,}"),
     ]
@@ -500,7 +496,7 @@ def write_svg(
         )
 
     parts.append(
-        f'<text x="64" y="282" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="{ink}">Holdout scenario cost</text>'
+        f'<text x="64" y="282" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="{ink}">Holdout modeled cost</text>'
     )
     chart_x, chart_y, chart_w, chart_h = 64, 310, 510, 230
     max_cost = float(policy_results["total_cost"].max()) or 1.0
@@ -534,7 +530,7 @@ def write_svg(
         )
 
     parts.append(
-        f'<text x="64" y="592" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="{ink}">Largest optimizer reallocations</text>'
+        f'<text x="64" y="592" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="{ink}">Largest allocation changes</text>'
     )
     shifts = decisions.assign(
         shift=lambda data: data["optimized_qty"] - data["proportional_qty"]
@@ -685,7 +681,7 @@ def run_analysis(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
-    analyze = subparsers.add_parser("analyze", help="run the real-data decision analysis")
+    analyze = subparsers.add_parser("analyze", help="run the replenishment analysis")
     analyze.add_argument("--input", required=True, help="path to online_retail_II.xlsx")
     analyze.add_argument("--sheet", default="Year 2010-2011")
     analyze.add_argument("--country", default="United Kingdom")
