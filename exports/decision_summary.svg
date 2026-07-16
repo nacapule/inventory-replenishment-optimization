@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+<rect width="1200" height="820" fill="#f7f4ed"/>
+<text x="64" y="66" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#17212b">Inventory under constraint</text>
+<text x="64" y="98" font-family="Arial, sans-serif" font-size="17" fill="#64717b">Forecast backtest and empirical newsvendor allocation · final 12 weeks held out</text>
+<rect x="64" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
+<text x="82" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Weekly capacity</text>
+<text x="82" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">7,060 units</text>
+<rect x="338" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
+<text x="356" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Scenario cost reduction</text>
+<text x="356" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">13.5%</text>
+<rect x="612" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
+<text x="630" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Optimized fill rate</text>
+<text x="630" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">65.0%</text>
+<rect x="886" y="126" width="246" height="104" rx="12" fill="#ffffff" stroke="#d9d5ca"/>
+<text x="904" y="158" font-family="Arial, sans-serif" font-size="15" fill="#64717b">Selected SKUs</text>
+<text x="904" y="203" font-family="Arial, sans-serif" font-size="29" font-weight="700" fill="#234a67">20</text>
+<text x="64" y="282" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Holdout scenario cost</text>
+<text x="64" y="327" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Newsvendor unconstrained</text>
+<rect x="254" y="310" width="237.5" height="23" rx="4" fill="#2a7f77"/>
+<text x="501.5" y="327" font-family="Arial, sans-serif" font-size="14" fill="#64717b">£22,942</text>
+<text x="64" y="379" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Optimized</text>
+<rect x="254" y="362" width="250.7" height="23" rx="4" fill="#234a67"/>
+<text x="514.7" y="379" font-family="Arial, sans-serif" font-size="14" fill="#64717b">£24,209</text>
+<text x="64" y="431" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Proportional mean</text>
+<rect x="254" y="414" width="289.6" height="23" rx="4" fill="#cf6b52"/>
+<text x="553.6" y="431" font-family="Arial, sans-serif" font-size="14" fill="#64717b">£27,972</text>
+<text x="64" y="483" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Historical mean unconstrained</text>
+<rect x="254" y="466" width="295.8" height="23" rx="4" fill="#8b7ba8"/>
+<text x="559.8" y="483" font-family="Arial, sans-serif" font-size="14" fill="#64717b">£28,569</text>
+<text x="650" y="282" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Forecast WAPE</text>
+<text x="650" y="327" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Exponential smoothing</text>
+<rect x="650" y="337" width="219.9" height="20" rx="4" fill="#2a7f77" opacity="1.0"/>
+<text x="879.9" y="353" font-family="Arial, sans-serif" font-size="14" fill="#64717b">50.8%</text>
+<text x="650" y="389" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Trailing 4 weeks</text>
+<rect x="650" y="399" width="225.3" height="20" rx="4" fill="#234a67" opacity="0.72"/>
+<text x="885.3" y="415" font-family="Arial, sans-serif" font-size="14" fill="#64717b">52.0%</text>
+<text x="650" y="451" font-family="Arial, sans-serif" font-size="14" fill="#17212b">Historical mean</text>
+<rect x="650" y="461" width="340.0" height="20" rx="4" fill="#234a67" opacity="0.72"/>
+<text x="1000.0" y="477" font-family="Arial, sans-serif" font-size="14" fill="#64717b">78.5%</text>
+<text x="64" y="592" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#17212b">Largest optimizer reallocations</text>
+<line x1="780" y1="620" x2="780" y2="790" stroke="#d9d5ca" stroke-width="2"/>
+<text x="64" y="639" font-family="Arial, sans-serif" font-size="13" fill="#17212b">23166 · MEDIUM CERAMIC TOP STORAGE JAR</text>
+<rect x="480.0" y="626" width="300.0" height="14" rx="2" fill="#cf6b52"/>
+<text x="1090" y="639" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">-1817</text>
+<text x="64" y="659" font-family="Arial, sans-serif" font-size="13" fill="#17212b">85123A · WHITE HANGING HEART T-LIGHT HOLDER</text>
+<rect x="780.0" y="646" width="46.7" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="659" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+283</text>
+<text x="64" y="679" font-family="Arial, sans-serif" font-size="13" fill="#17212b">85099B · JUMBO BAG RED RETROSPOT</text>
+<rect x="780.0" y="666" width="43.4" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="679" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+263</text>
+<text x="64" y="699" font-family="Arial, sans-serif" font-size="13" fill="#17212b">23298 · SPOTTY BUNTING</text>
+<rect x="780.0" y="686" width="38.8" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="699" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+235</text>
+<text x="64" y="719" font-family="Arial, sans-serif" font-size="13" fill="#17212b">47566 · PARTY BUNTING</text>
+<rect x="780.0" y="706" width="35.5" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="719" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+215</text>
+<text x="64" y="739" font-family="Arial, sans-serif" font-size="13" fill="#17212b">85099F · JUMBO BAG STRAWBERRY</text>
+<rect x="780.0" y="726" width="29.2" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="739" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+177</text>
+<text x="64" y="759" font-family="Arial, sans-serif" font-size="13" fill="#17212b">84879 · ASSORTED COLOUR BIRD ORNAMENT</text>
+<rect x="780.0" y="746" width="25.1" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="759" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+152</text>
+<text x="64" y="779" font-family="Arial, sans-serif" font-size="13" fill="#17212b">22386 · JUMBO BAG PINK POLKADOT</text>
+<rect x="780.0" y="766" width="23.8" height="14" rx="2" fill="#2a7f77"/>
+<text x="1090" y="779" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#64717b">+144</text>
+</svg>
