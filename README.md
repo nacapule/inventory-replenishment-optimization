@@ -76,3 +76,9 @@ arguments, so they can be changed for sensitivity testing.
 
 Daqing Chen (2012), *Online Retail II*, UCI Machine Learning Repository.
 [DOI 10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D). CC BY 4.0.
+
+## See also
+
+[retail-sales-dashboard](https://github.com/nacapule/retail-sales-dashboard) builds
+the analytics and reporting layer on the same retailer's data — a DuckDB star schema
+and a Power BI report whose fulfillment page uses this project's published results.
