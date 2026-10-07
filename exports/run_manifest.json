@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "config_file": "configs/published.toml",
+  "config": {
+    "sha256": "bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980",
+    "size": 45622278,
+    "country": "United Kingdom",
+    "reversal_hours": 24,
+    "skus": 20,
+    "min_active_weeks": 26,
+    "selection_weeks": 52,
+    "evaluation_weeks": 52,
+    "policy": "optimizer",
+    "baselines": [
+      "scaled_fractile",
+      "proportional"
+    ],
+    "block_weeks": 4,
+    "check_block_weeks": [
+      2,
+      8
+    ],
+    "resamples": 10000,
+    "seed": 20261006,
+    "confidence": 0.95,
+    "bridge_sheet": "Year 2010-2011",
+    "bridge_skus": 20,
+    "bridge_min_active_weeks": 20,
+    "bridge_holdout_weeks": 12,
+    "bridge_capacity_share": 0.85,
+    "bridge_steps": [
+      "original",
+      "prompt_reversals",
+      "code_registry",
+      "case_normalization",
+      "complete_weeks",
+      "training_prices",
+      "inverse_ecdf_capacity"
+    ],
+    "primary": {
+      "id": "primary",
+      "label": "Primary configuration",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true
+    },
+    "sensitivities": [
+      {
+        "id": "capacity_0.75",
+        "label": "Capacity factor 0.75",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 0.75,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "capacity_1.25",
+        "label": "Capacity factor 1.25",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.25,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "ratio_0.75",
+        "label": "Critical ratio 0.75",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.15,
+        "critical_ratio": 0.75,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "ratio_0.95",
+        "label": "Critical ratio 0.95",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.95,
+        "critical_ratio": 0.95,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "ratio_0.98",
+        "label": "Critical ratio 0.98",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 2.45,
+        "critical_ratio": 0.98,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "trailing_13",
+        "label": "History: trailing 13 weeks",
+        "window": "trailing_13",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "seasonal_analog",
+        "label": "History: same 13 weeks a year earlier",
+        "window": "seasonal_analog",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "originally_cleaned",
+        "label": "Data as originally cleaned",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "none",
+        "registry": false,
+        "normalize_case": false
+      },
+      {
+        "id": "all_exact_credits",
+        "label": "All exactly matched credits removed as known",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "all_exact",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "bulk_cap",
+        "label": "History capped at each SKU's 99th-percentile order (added after an exploratory result favored it)",
+        "window": "trailing_52",
+        "closure_weeks": "drop",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": 0.99,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      },
+      {
+        "id": "closure_weeks_kept",
+        "label": "Closure weeks kept as zero-sales history",
+        "window": "trailing_52",
+        "closure_weeks": "zero",
+        "capacity_factor": 1.0,
+        "holding_rate": 0.05,
+        "shortage_rate": 0.3,
+        "critical_ratio": 0.857143,
+        "bulk_cap_quantile": null,
+        "reversals": "prompt",
+        "registry": true,
+        "normalize_case": true
+      }
+    ]
+  },
+  "input": {
+    "file": "online_retail_II.xlsx",
+    "bytes": 45622278,
+    "sha256": "bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980"
+  },
+  "sheets": {
+    "rows": {
+      "Year 2009-2010": 525461,
+      "Year 2010-2011": 541910
+    },
+    "overlap_rows": 22523,
+    "combined_rows": 1044848
+  },
+  "sources": {
+    "src/data.py": "3625aae2487cd891e65ba9d4d67f986d77715113d3a2555190619e48540b6ba0",
+    "src/model.py": "2e718f355fde33b2392f5c83a9ecc87d31bb5ad93d5d48b8a82fd1b74b30e702",
+    "src/experiment.py": "120da4aa4973da26f19e0052748505bcd3e6d2394818e1cf2e2be3c184a76308",
+    "src/report.py": "77424addbb0e2ac479856913c0926fd2379fea68fa2b6ba2f3cefe986bc8638e",
+    "src/replenishment.py": "ddc10b5b546e8aecf96c1e4394bb1f53b869df8250bbfae058b5c87d088e8576",
+    "data/code_registry.csv": "a7d6e53ab41efd467b335b51966ef66210bb5f866880c1b22c407949e420bbd5",
+    "templates/insight_report.md": "e38d6453bbdd3177a21daf1340cdd1c0ede4b1b06f2cac6dc1974ea14be64aee",
+    "templates/data_quality.md": "39d786c5fee4e235613cde9700967e015ae6cf8108a0d1061933b19166225987",
+    "templates/readme_results.md": "3172c480bba553529bef416b5976cde52cc295864496e431cd40e549bd3eab0d",
+    "configs/published.toml": "b9132100d69e2b7c14d788c95a1ca382b9bbf6f3e7c397b1eb3226f526334458"
+  },
+  "environment": {
+    "python": "3.14.7",
+    "numpy": "2.5.3",
+    "pandas": "2.3.3",
+    "openpyxl": "3.1.5",
+    "matplotlib": "3.11.2"
+  },
+  "calendar": {
+    "first_week": "2009-11-30",
+    "last_week": "2011-12-05",
+    "partial_weeks": [
+      "2009-11-30",
+      "2011-12-05"
+    ],
+    "closure_weeks": [
+      "2009-12-28",
+      "2010-12-27"
+    ],
+    "selection": [
+      "2009-12-07",
+      "2010-11-29"
+    ],
+    "evaluation": [
+      "2010-12-06",
+      "2011-11-28"
+    ]
+  },
+  "artifacts": {
+    "policy_comparison.csv": {
+      "sha256": "be3633e6bf3cb8cad2f5c37daa10e040e6fd0b3d7ed17fef9e0fba73ef4bd627",
+      "bytes": 1001,
+      "rows": 5
+    },
+    "sku_decisions.csv": {
+      "sha256": "40ed9ae9f4a070968cfb8ace0bf9314f5c570121d344acdab58e615ce7c2884a",
+      "bytes": 4028,
+      "rows": 20
+    },
+    "forecast_metrics.csv": {
+      "sha256": "54e7b3b1d41ec437a2df08969a6e21f327d260dd4d3ddbd2e03c34cceca05f7d",
+      "bytes": 371,
+      "rows": 3
+    },
+    "weekly_results.csv": {
+      "sha256": "094173c951c934cdc6e5f3e52e8b2ada668ce1631e10f9385a4699ccd5c6f3fa",
+      "bytes": 447544,
+      "rows": 5200
+    },
+    "sensitivity.csv": {
+      "sha256": "159ce6487d32199a9be44061781549b695b775dfebb21f24fc3326df719aca3b",
+      "bytes": 4617,
+      "rows": 12
+    },
+    "published_bridge.csv": {
+      "sha256": "384ff298b7a6a3f3048e2745ac94dc7142a4baed0c55bd02b169b55739e4b5c9",
+      "bytes": 2254,
+      "rows": 7
+    },
+    "reconciliation.csv": {
+      "sha256": "7176d698e3dcd64b75b5e1cfdbdfdf731a5e4e79049ec9538d09fb46b75ece75",
+      "bytes": 1019,
+      "rows": 19
+    },
+    "reversal_pairs.csv": {
+      "sha256": "882149c9bf6faac46fdb00624dc9d576435cf3f85ece86dddf09a804eeb022a7",
+      "bytes": 224997,
+      "rows": 1347
+    },
+    "weekly_sales.csv": {
+      "sha256": "a365a6b67e2ffd5901e45f2b0cc621fbd8dbeb98631c4be3f59a120d2f1f92f2",
+      "bytes": 111354,
+      "rows": 2080
+    },
+    "cost_difference.svg": {
+      "sha256": "cf467470fe5c6055bcd56a05edbdc41eb6ad23ac756a6492771815bd6db105a6",
+      "bytes": 16150
+    },
+    "insight_report.md": {
+      "sha256": "375d3033ca643ca7061607165ccdcd4a37654d774581e0315f923e37046cb975",
+      "bytes": 14647
+    },
+    "data_quality.md": {
+      "sha256": "f7b7373dc668f9cb00491ebabf67f17bb42a4fbad246f4f86c2a64200ac5e02e",
+      "bytes": 21577
+    },
+    "summary.json": {
+      "sha256": "ec6b743cbfee2a3d081673160c2545f9649604b064e5ba22ddaaebb4aa734405",
+      "bytes": 48065
+    }
+  }
+}

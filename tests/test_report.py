@@ -151,6 +151,8 @@ class TemplateTests(unittest.TestCase):
         for name, frame in frames.items():
             with self.subTest(file=name):
                 self.assertEqual(set(frame.columns), documented[name])
+                if (EXPORTS / name).exists():
+                    self.assertEqual(list(pd.read_csv(EXPORTS / name, nrows=0).columns), list(frame.columns))
 
 
 class BundleTests(unittest.TestCase):
@@ -210,6 +212,12 @@ class BundleTests(unittest.TestCase):
 
 
 class ReadmeTests(unittest.TestCase):
+    def test_committed_block_matches_the_committed_summary(self):
+        summary_ = json.loads((EXPORTS / "summary.json").read_text(encoding="utf-8"))
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        start, end = readme.index(report.README_START), readme.index(report.README_END) + len(report.README_END)
+        self.assertEqual(readme[start:end], report.readme_block(summary_))
+
     def test_update_rewrites_only_the_block(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "README.md"
@@ -223,6 +231,32 @@ class ReadmeTests(unittest.TestCase):
             path.write_text("no markers\n", encoding="utf-8")
             with self.assertRaises(ValueError):
                 report.update_readme(path, summary())
+
+
+class CommittedExportTests(unittest.TestCase):
+    def test_dashboard_files_keep_their_columns_and_grain(self):
+        expected = {
+            "policy_comparison.csv": (["policy", "allocated_units", "fill_rate", "stockout_rate", "holding_cost",
+                                       "shortage_cost", "total_cost"], len(NAMES)),
+            "sku_decisions.csv": (["sku", "description", "unit_price", "train_mean", "train_std",
+                                   "train_positive_median", "train_max", "active_train_weeks", "proportional_qty",
+                                   "optimized_qty", "newsvendor_qty", "spike_ratio"], 20),
+            "forecast_metrics.csv": (["method", "wape", "bias", "mae"], len(experiment.WINDOWS)),
+        }
+        for name, (columns, rows) in expected.items():
+            frame = pd.read_csv(EXPORTS / name)
+            with self.subTest(file=name):
+                self.assertEqual(list(frame.columns[:len(columns)]), columns)
+                self.assertEqual(len(frame), rows)
+
+    def test_committed_manifest_matches_the_committed_artifacts(self):
+        record = json.loads((EXPORTS / report.MANIFEST).read_text(encoding="utf-8"))
+        self.assertEqual(set(record["artifacts"]), set(report.ARTIFACTS))
+        for name, entry in record["artifacts"].items():
+            with self.subTest(file=name):
+                self.assertEqual(report.sha256(EXPORTS / name), entry["sha256"])
+        self.assertEqual(sorted(path.name for path in EXPORTS.iterdir()),
+                         sorted(report.ARTIFACTS + (report.MANIFEST,)))
 
 
 # The figure -------------------------------------------------------------------------------

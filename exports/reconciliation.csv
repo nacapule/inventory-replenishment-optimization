@@ -1,0 +1,20 @@
+sheet,role,rows,units,value
+Year 2009-2010,overlap,22523,166648,377488.45
+Year 2009-2010,accounting_invoice,3,3,-136552.02000000002
+Year 2009-2010,prompt_reversal_credit,678,-36850,-97216.28
+Year 2009-2010,ledger_credit,9199,-164539,-471274.89
+Year 2009-2010,stock_adjustment,2057,-362357,0.0
+Year 2009-2010,zero_price,1452,178167,0.0
+Year 2009-2010,prompt_reversal_sale,678,36850,97216.28
+Year 2009-2010,non_merchandise,1673,3366,175103.78
+Year 2009-2010,quarantined,528,2683,225391.404
+Year 2009-2010,merchandise_sale,486670,5608070,9369327.91
+Year 2010-2011,accounting_invoice,3,3,-11062.06
+Year 2010-2011,prompt_reversal_credit,669,-179807,-305606.28
+Year 2010-2011,ledger_credit,8619,-97767,-591206.21
+Year 2010-2011,stock_adjustment,1336,-206957,0.0
+Year 2010-2011,zero_price,1179,72603,0.0
+Year 2010-2011,prompt_reversal_sale,669,179807,305606.28
+Year 2010-2011,non_merchandise,2015,4034,305876.601
+Year 2010-2011,quarantined,299,7151,64627.183000000005
+Year 2010-2011,merchandise_sale,527121,5397384,9979530.42

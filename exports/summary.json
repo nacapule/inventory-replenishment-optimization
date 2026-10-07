@@ -1,0 +1,1761 @@
+{
+  "schema_version": 1,
+  "study": {
+    "country": "United Kingdom",
+    "skus": [
+      "22423",
+      "85123A",
+      "85099B",
+      "84879",
+      "22086",
+      "47566",
+      "84347",
+      "48138",
+      "21843",
+      "21621",
+      "85099F",
+      "15056N",
+      "21232",
+      "22386",
+      "20685",
+      "85099C",
+      "20725",
+      "79321",
+      "21754",
+      "21931"
+    ],
+    "cohort_size": 20,
+    "capacity_units": 6455,
+    "mean_weekly_units": 6455.294118,
+    "capacity_factor": 1.0,
+    "selection": {
+      "first_week": "2009-12-07",
+      "last_week": "2010-11-29",
+      "weeks": 52,
+      "open_weeks": 51
+    },
+    "evaluation": {
+      "first_week": "2010-12-06",
+      "last_day": "2011-12-04",
+      "weeks": 52,
+      "closure_weeks": [
+        "2010-12-27"
+      ]
+    },
+    "holding_rate": 0.05,
+    "shortage_rate": 0.3,
+    "critical_ratio": 0.857143,
+    "window": "trailing_52",
+    "window_label": "Trailing 52 weeks",
+    "min_active_weeks": 26
+  },
+  "settings": {
+    "reversal_hours": 24,
+    "block_weeks": 4,
+    "resamples": 10000,
+    "bridge_sheet": "Year 2010-2011",
+    "bridge_holdout_weeks": 12,
+    "bridge_min_active_weeks": 20,
+    "bridge_capacity_share": 0.85
+  },
+  "policies": [
+    {
+      "id": "proportional",
+      "name": "Proportional to recent mean",
+      "reference": false,
+      "allocated_units": 6455.0,
+      "fill_rate": 0.769391,
+      "stockout_rate": 0.244231,
+      "holding_cost": 21275.6275,
+      "shortage_cost": 60819.447,
+      "total_cost": 82095.0745,
+      "ordered_units": 207465,
+      "leftover_units": 2480.057692,
+      "max_start_units": 6455,
+      "within_capacity": true
+    },
+    {
+      "id": "scaled_fractile",
+      "name": "Scaled critical-fractile",
+      "reference": false,
+      "allocated_units": 6455.0,
+      "fill_rate": 0.778232,
+      "stockout_rate": 0.242308,
+      "holding_cost": 21725.9955,
+      "shortage_cost": 56183.274,
+      "total_cost": 77909.2695,
+      "ordered_units": 209707,
+      "leftover_units": 2434.384615,
+      "max_start_units": 6455,
+      "within_capacity": true
+    },
+    {
+      "id": "optimizer",
+      "name": "Marginal optimizer",
+      "reference": false,
+      "allocated_units": 6455.0,
+      "fill_rate": 0.774052,
+      "stockout_rate": 0.221154,
+      "holding_cost": 26875.2815,
+      "shortage_cost": 54169.23,
+      "total_cost": 81044.5115,
+      "ordered_units": 208805,
+      "leftover_units": 2455.980769,
+      "max_start_units": 6455,
+      "within_capacity": true
+    },
+    {
+      "id": "optimizer_unit",
+      "name": "Marginal optimizer, equal prices",
+      "reference": false,
+      "allocated_units": 6455.0,
+      "fill_rate": 0.778798,
+      "stockout_rate": 0.220192,
+      "holding_cost": 21628.1355,
+      "shortage_cost": 57884.802,
+      "total_cost": 79512.9375,
+      "ordered_units": 209937,
+      "leftover_units": 2431.461538,
+      "max_start_units": 6455,
+      "within_capacity": true
+    },
+    {
+      "id": "unconstrained",
+      "name": "Unconstrained newsvendor",
+      "reference": true,
+      "allocated_units": 9700.634615,
+      "fill_rate": 0.884396,
+      "stockout_rate": 0.1,
+      "holding_cost": 45043.618,
+      "shortage_cost": 31358.97,
+      "total_cost": 76402.588,
+      "ordered_units": 239821,
+      "leftover_units": 5131.538462,
+      "max_start_units": 10038,
+      "within_capacity": false
+    }
+  ],
+  "best_within_capacity": "scaled_fractile",
+  "comparisons": [
+    {
+      "baseline": "scaled_fractile",
+      "policy_cost": 81044.5115,
+      "baseline_cost": 77909.2695,
+      "difference": 3135.242,
+      "relative": 0.040242,
+      "weeks_won": 20,
+      "weeks_lost": 32,
+      "weeks_tied": 0,
+      "policy": "optimizer",
+      "confidence": 0.95,
+      "block_weeks": 4,
+      "interval": {
+        "difference": [
+          412.881463,
+          6409.181238
+        ],
+        "relative": [
+          0.005675,
+          0.08292
+        ]
+      },
+      "checks": [
+        {
+          "block_weeks": 2,
+          "difference": [
+            833.605962,
+            5942.71625
+          ],
+          "relative": [
+            0.010788,
+            0.079237
+          ]
+        },
+        {
+          "block_weeks": 8,
+          "difference": [
+            -370.681125,
+            6488.611262
+          ],
+          "relative": [
+            -0.00537,
+            0.085579
+          ]
+        }
+      ],
+      "verdict": "higher"
+    },
+    {
+      "baseline": "proportional",
+      "policy_cost": 81044.5115,
+      "baseline_cost": 82095.0745,
+      "difference": -1050.563,
+      "relative": -0.012797,
+      "weeks_won": 27,
+      "weeks_lost": 25,
+      "weeks_tied": 0,
+      "policy": "optimizer",
+      "confidence": 0.95,
+      "block_weeks": 4,
+      "interval": {
+        "difference": [
+          -3666.513312,
+          2619.595112
+        ],
+        "relative": [
+          -0.048783,
+          0.033479
+        ]
+      },
+      "checks": [
+        {
+          "block_weeks": 2,
+          "difference": [
+            -3540.022062,
+            1981.203125
+          ],
+          "relative": [
+            -0.043587,
+            0.025767
+          ]
+        },
+        {
+          "block_weeks": 8,
+          "difference": [
+            -4774.744787,
+            3132.576275
+          ],
+          "relative": [
+            -0.064598,
+            0.04187
+          ]
+        }
+      ],
+      "verdict": "no clear difference"
+    }
+  ],
+  "quarters": [
+    {
+      "quarter": 1,
+      "first_week": "2010-12-06",
+      "weeks": 13,
+      "last_week": "2011-02-28",
+      "proportional": 18538.8925,
+      "scaled_fractile": 18028.357,
+      "optimizer": 18218.7795,
+      "optimizer_unit": 18198.4805,
+      "unconstrained": 19869.5235
+    },
+    {
+      "quarter": 2,
+      "first_week": "2011-03-07",
+      "weeks": 13,
+      "last_week": "2011-05-30",
+      "proportional": 17953.531,
+      "scaled_fractile": 16932.0335,
+      "optimizer": 16667.626,
+      "optimizer_unit": 16253.0325,
+      "unconstrained": 16540.868
+    },
+    {
+      "quarter": 3,
+      "first_week": "2011-06-06",
+      "weeks": 13,
+      "last_week": "2011-08-29",
+      "proportional": 19062.671,
+      "scaled_fractile": 17789.557,
+      "optimizer": 18059.1005,
+      "optimizer_unit": 17785.481,
+      "unconstrained": 18561.7915
+    },
+    {
+      "quarter": 4,
+      "first_week": "2011-09-05",
+      "weeks": 13,
+      "last_week": "2011-11-28",
+      "proportional": 26539.98,
+      "scaled_fractile": 25159.322,
+      "optimizer": 28099.0055,
+      "optimizer_unit": 27275.9435,
+      "unconstrained": 21430.405
+    }
+  ],
+  "sku_contributions": [
+    {
+      "sku": "22423",
+      "proportional_cost": 6731.3625,
+      "proportional_fill_rate": 0.913146,
+      "scaled_fractile_cost": 6222.0,
+      "scaled_fractile_fill_rate": 0.928938,
+      "optimizer_cost": 8764.9875,
+      "optimizer_fill_rate": 0.96516,
+      "optimizer_unit_cost": 6468.075,
+      "optimizer_unit_fill_rate": 0.94542,
+      "unconstrained_cost": 9294.75,
+      "unconstrained_fill_rate": 0.967134,
+      "sales_units": 10132
+    },
+    {
+      "sku": "85123A",
+      "proportional_cost": 7992.2875,
+      "proportional_fill_rate": 0.824639,
+      "scaled_fractile_cost": 8102.765,
+      "scaled_fractile_fill_rate": 0.801495,
+      "optimizer_cost": 8075.7725,
+      "optimizer_fill_rate": 0.83998,
+      "optimizer_unit_cost": 8065.1525,
+      "optimizer_unit_fill_rate": 0.833749,
+      "unconstrained_cost": 8326.67,
+      "unconstrained_fill_rate": 0.88425,
+      "sales_units": 33702
+    },
+    {
+      "sku": "85099B",
+      "proportional_cost": 5603.4485,
+      "proportional_fill_rate": 0.823715,
+      "scaled_fractile_cost": 5572.0665,
+      "scaled_fractile_fill_rate": 0.825693,
+      "optimizer_cost": 5249.9005,
+      "optimizer_fill_rate": 0.844294,
+      "optimizer_unit_cost": 5123.131,
+      "optimizer_unit_fill_rate": 0.854512,
+      "unconstrained_cost": 4484.246,
+      "unconstrained_fill_rate": 0.939535,
+      "sales_units": 42471
+    },
+    {
+      "sku": "84879",
+      "proportional_cost": 4058.7885,
+      "proportional_fill_rate": 0.825608,
+      "scaled_fractile_cost": 4624.6005,
+      "scaled_fractile_fill_rate": 0.767001,
+      "optimizer_cost": 4745.6045,
+      "optimizer_fill_rate": 0.758539,
+      "optimizer_unit_cost": 4244.097,
+      "optimizer_unit_fill_rate": 0.804424,
+      "unconstrained_cost": 4205.3115,
+      "unconstrained_fill_rate": 0.865986,
+      "sales_units": 32146
+    },
+    {
+      "sku": "22086",
+      "proportional_cost": 10219.5375,
+      "proportional_fill_rate": 0.38521,
+      "scaled_fractile_cost": 9103.5525,
+      "scaled_fractile_fill_rate": 0.500495,
+      "optimizer_cost": 8979.505,
+      "optimizer_fill_rate": 0.42104,
+      "optimizer_unit_cost": 9216.095,
+      "optimizer_unit_fill_rate": 0.397587,
+      "unconstrained_cost": 8138.3125,
+      "unconstrained_fill_rate": 0.652166,
+      "sales_units": 16160
+    },
+    {
+      "sku": "47566",
+      "proportional_cost": 10631.3925,
+      "proportional_fill_rate": 0.606403,
+      "scaled_fractile_cost": 8343.555,
+      "scaled_fractile_fill_rate": 0.716535,
+      "optimizer_cost": 8284.185,
+      "optimizer_fill_rate": 0.742869,
+      "optimizer_unit_cost": 10157.2425,
+      "optimizer_unit_fill_rate": 0.640135,
+      "unconstrained_cost": 6104.325,
+      "unconstrained_fill_rate": 0.868387,
+      "sales_units": 16898
+    },
+    {
+      "sku": "84347",
+      "proportional_cost": 4822.815,
+      "proportional_fill_rate": 0.565786,
+      "scaled_fractile_cost": 4599.945,
+      "scaled_fractile_fill_rate": 0.592329,
+      "optimizer_cost": 4912.575,
+      "optimizer_fill_rate": 0.239268,
+      "optimizer_unit_cost": 4841.8125,
+      "optimizer_unit_fill_rate": 0.254255,
+      "unconstrained_cost": 4881.21,
+      "unconstrained_fill_rate": 0.750318,
+      "sales_units": 7874
+    },
+    {
+      "sku": "48138",
+      "proportional_cost": 3521.0705,
+      "proportional_fill_rate": 0.692352,
+      "scaled_fractile_cost": 3507.7785,
+      "scaled_fractile_fill_rate": 0.671861,
+      "optimizer_cost": 3681.2595,
+      "optimizer_fill_rate": 0.713131,
+      "optimizer_unit_cost": 3567.1865,
+      "optimizer_unit_fill_rate": 0.683117,
+      "unconstrained_cost": 3830.4105,
+      "unconstrained_fill_rate": 0.728427,
+      "sales_units": 3465
+    },
+    {
+      "sku": "21843",
+      "proportional_cost": 1257.06,
+      "proportional_fill_rate": 0.862709,
+      "scaled_fractile_cost": 1282.245,
+      "scaled_fractile_fill_rate": 0.875696,
+      "optimizer_cost": 1537.38,
+      "optimizer_fill_rate": 0.925788,
+      "optimizer_unit_cost": 1228.59,
+      "optimizer_unit_fill_rate": 0.883117,
+      "unconstrained_cost": 1752.5475,
+      "unconstrained_fill_rate": 0.931354,
+      "sales_units": 1078
+    },
+    {
+      "sku": "21621",
+      "proportional_cost": 2915.925,
+      "proportional_fill_rate": 0.707978,
+      "scaled_fractile_cost": 2950.775,
+      "scaled_fractile_fill_rate": 0.725417,
+      "optimizer_cost": 2973.3,
+      "optimizer_fill_rate": 0.770686,
+      "optimizer_unit_cost": 2780.775,
+      "optimizer_unit_fill_rate": 0.727273,
+      "unconstrained_cost": 3156.05,
+      "unconstrained_fill_rate": 0.820779,
+      "sales_units": 2695
+    },
+    {
+      "sku": "85099F",
+      "proportional_cost": 2901.249,
+      "proportional_fill_rate": 0.76742,
+      "scaled_fractile_cost": 2835.053,
+      "scaled_fractile_fill_rate": 0.776748,
+      "optimizer_cost": 2818.6665,
+      "optimizer_fill_rate": 0.777813,
+      "optimizer_unit_cost": 2623.803,
+      "optimizer_unit_fill_rate": 0.808677,
+      "unconstrained_cost": 2425.3905,
+      "unconstrained_fill_rate": 0.901897,
+      "sales_units": 15973
+    },
+    {
+      "sku": "15056N",
+      "proportional_cost": 2319.6075,
+      "proportional_fill_rate": 0.737214,
+      "scaled_fractile_cost": 2158.9575,
+      "scaled_fractile_fill_rate": 0.799661,
+      "optimizer_cost": 2132.1825,
+      "optimizer_fill_rate": 0.85024,
+      "optimizer_unit_cost": 2233.3325,
+      "optimizer_unit_fill_rate": 0.772817,
+      "unconstrained_cost": 2167.2875,
+      "unconstrained_fill_rate": 0.917491,
+      "sales_units": 3539
+    },
+    {
+      "sku": "21232",
+      "proportional_cost": 892.6875,
+      "proportional_fill_rate": 0.91258,
+      "scaled_fractile_cost": 836.25,
+      "scaled_fractile_fill_rate": 0.916168,
+      "optimizer_cost": 970.0625,
+      "optimizer_fill_rate": 0.852996,
+      "optimizer_unit_cost": 1004.875,
+      "optimizer_unit_fill_rate": 0.919756,
+      "unconstrained_cost": 1264.875,
+      "unconstrained_fill_rate": 0.945417,
+      "sales_units": 9197
+    },
+    {
+      "sku": "22386",
+      "proportional_cost": 3020.693,
+      "proportional_fill_rate": 0.771628,
+      "scaled_fractile_cost": 2901.834,
+      "scaled_fractile_fill_rate": 0.785905,
+      "optimizer_cost": 3010.2865,
+      "optimizer_fill_rate": 0.771362,
+      "optimizer_unit_cost": 2773.5825,
+      "optimizer_unit_fill_rate": 0.800075,
+      "unconstrained_cost": 2297.1585,
+      "unconstrained_fill_rate": 0.904698,
+      "sales_units": 18772
+    },
+    {
+      "sku": "20685",
+      "proportional_cost": 3551.099,
+      "proportional_fill_rate": 0.642327,
+      "scaled_fractile_cost": 3666.4555,
+      "scaled_fractile_fill_rate": 0.614426,
+      "optimizer_cost": 3441.99,
+      "optimizer_fill_rate": 0.691303,
+      "optimizer_unit_cost": 3569.65,
+      "optimizer_unit_fill_rate": 0.649154,
+      "unconstrained_cost": 3470.0415,
+      "unconstrained_fill_rate": 0.711784,
+      "sales_units": 3369
+    },
+    {
+      "sku": "85099C",
+      "proportional_cost": 1739.9135,
+      "proportional_fill_rate": 0.838705,
+      "scaled_fractile_cost": 1723.1825,
+      "scaled_fractile_fill_rate": 0.837675,
+      "optimizer_cost": 1663.2655,
+      "optimizer_fill_rate": 0.875049,
+      "optimizer_unit_cost": 1619.995,
+      "optimizer_unit_fill_rate": 0.894766,
+      "unconstrained_cost": 1373.7295,
+      "unconstrained_fill_rate": 0.964447,
+      "sales_units": 12629
+    },
+    {
+      "sku": "20725",
+      "proportional_cost": 1190.475,
+      "proportional_fill_rate": 0.881168,
+      "scaled_fractile_cost": 1224.7125,
+      "scaled_fractile_fill_rate": 0.873348,
+      "optimizer_cost": 1301.7675,
+      "optimizer_fill_rate": 0.859644,
+      "optimizer_unit_cost": 1179.0075,
+      "optimizer_unit_fill_rate": 0.893626,
+      "unconstrained_cost": 1139.82,
+      "unconstrained_fill_rate": 0.965672,
+      "sales_units": 14449
+    },
+    {
+      "sku": "79321",
+      "proportional_cost": 6746.6525,
+      "proportional_fill_rate": 0.596783,
+      "scaled_fractile_cost": 6236.1575,
+      "scaled_fractile_fill_rate": 0.657646,
+      "optimizer_cost": 6358.6875,
+      "optimizer_fill_rate": 0.657972,
+      "optimizer_unit_cost": 7038.81,
+      "optimizer_unit_fill_rate": 0.577111,
+      "unconstrained_cost": 6058.05,
+      "unconstrained_fill_rate": 0.748614,
+      "sales_units": 9201
+    },
+    {
+      "sku": "21754",
+      "proportional_cost": 689.605,
+      "proportional_fill_rate": 0.959427,
+      "scaled_fractile_cost": 692.58,
+      "scaled_fractile_fill_rate": 0.939141,
+      "optimizer_cost": 829.1325,
+      "optimizer_fill_rate": 0.978123,
+      "optimizer_unit_cost": 725.6025,
+      "optimizer_unit_fill_rate": 0.968974,
+      "unconstrained_cost": 998.7075,
+      "unconstrained_fill_rate": 0.988862,
+      "sales_units": 2514
+    },
+    {
+      "sku": "21931",
+      "proportional_cost": 1289.405,
+      "proportional_fill_rate": 0.874294,
+      "scaled_fractile_cost": 1324.804,
+      "scaled_fractile_fill_rate": 0.867189,
+      "optimizer_cost": 1314.001,
+      "optimizer_fill_rate": 0.868723,
+      "optimizer_unit_cost": 1052.1225,
+      "optimizer_unit_fill_rate": 0.936299,
+      "unconstrained_cost": 1033.695,
+      "unconstrained_fill_rate": 0.98135,
+      "sales_units": 12386
+    }
+  ],
+  "sensitivity": [
+    {
+      "id": "primary",
+      "label": "Primary configuration",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 82095.0745,
+        "scaled_fractile": 77909.2695,
+        "optimizer": 81044.5115,
+        "optimizer_unit": 79512.9375,
+        "unconstrained": 76402.588
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 81044.5115,
+          "baseline_cost": 77909.2695,
+          "difference": 3135.242,
+          "relative": 0.040242,
+          "weeks_won": 20,
+          "weeks_lost": 32,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              412.881463,
+              6409.181238
+            ],
+            "relative": [
+              0.005675,
+              0.08292
+            ]
+          },
+          "checks": [
+            {
+              "block_weeks": 2,
+              "difference": [
+                833.605962,
+                5942.71625
+              ],
+              "relative": [
+                0.010788,
+                0.079237
+              ]
+            },
+            {
+              "block_weeks": 8,
+              "difference": [
+                -370.681125,
+                6488.611262
+              ],
+              "relative": [
+                -0.00537,
+                0.085579
+              ]
+            }
+          ],
+          "verdict": "higher"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 81044.5115,
+          "baseline_cost": 82095.0745,
+          "difference": -1050.563,
+          "relative": -0.012797,
+          "weeks_won": 27,
+          "weeks_lost": 25,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -3666.513312,
+              2619.595112
+            ],
+            "relative": [
+              -0.048783,
+              0.033479
+            ]
+          },
+          "checks": [
+            {
+              "block_weeks": 2,
+              "difference": [
+                -3540.022062,
+                1981.203125
+              ],
+              "relative": [
+                -0.043587,
+                0.025767
+              ]
+            },
+            {
+              "block_weeks": 8,
+              "difference": [
+                -4774.744787,
+                3132.576275
+              ],
+              "relative": [
+                -0.064598,
+                0.04187
+              ]
+            }
+          ],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "capacity_0.75",
+      "label": "Capacity factor 0.75",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 0.75,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 4841,
+      "costs": {
+        "proportional": 97781.7075,
+        "scaled_fractile": 94719.462,
+        "optimizer": 96037.859,
+        "optimizer_unit": 97301.127,
+        "unconstrained": 76402.588
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 96037.859,
+          "baseline_cost": 94719.462,
+          "difference": 1318.397,
+          "relative": 0.013919,
+          "weeks_won": 25,
+          "weeks_lost": 27,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -3945.842337,
+              7480.130762
+            ],
+            "relative": [
+              -0.045457,
+              0.081461
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 96037.859,
+          "baseline_cost": 97781.7075,
+          "difference": -1743.8485,
+          "relative": -0.017834,
+          "weeks_won": 29,
+          "weeks_lost": 23,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -7080.5006,
+              4798.958725
+            ],
+            "relative": [
+              -0.079602,
+              0.049907
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "capacity_1.25",
+      "label": "Capacity factor 1.25",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.25,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 8069,
+      "costs": {
+        "proportional": 77967.55,
+        "scaled_fractile": 73511.116,
+        "optimizer": 75231.373,
+        "optimizer_unit": 74473.2775,
+        "unconstrained": 76402.588
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 75231.373,
+          "baseline_cost": 73511.116,
+          "difference": 1720.257,
+          "relative": 0.023401,
+          "weeks_won": 16,
+          "weeks_lost": 36,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              605.448875,
+              3008.833738
+            ],
+            "relative": [
+              0.009005,
+              0.040622
+            ]
+          },
+          "checks": [],
+          "verdict": "higher"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 75231.373,
+          "baseline_cost": 77967.55,
+          "difference": -2736.177,
+          "relative": -0.035094,
+          "weeks_won": 32,
+          "weeks_lost": 20,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -4239.757525,
+              94.3819
+            ],
+            "relative": [
+              -0.053651,
+              0.001309
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "ratio_0.75",
+      "label": "Critical ratio 0.75",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.15,
+      "critical_ratio": 0.75,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 51685.351,
+        "scaled_fractile": 50208.9445,
+        "optimizer": 51233.639,
+        "optimizer_unit": 50570.5365,
+        "unconstrained": 53366.658
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 51233.639,
+          "baseline_cost": 50208.9445,
+          "difference": 1024.6945,
+          "relative": 0.020409,
+          "weeks_won": 13,
+          "weeks_lost": 39,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              438.9958,
+              1614.5047
+            ],
+            "relative": [
+              0.00895,
+              0.034415
+            ]
+          },
+          "checks": [],
+          "verdict": "higher"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 51233.639,
+          "baseline_cost": 51685.351,
+          "difference": -451.712,
+          "relative": -0.00874,
+          "weeks_won": 27,
+          "weeks_lost": 25,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -1816.649,
+              922.210412
+            ],
+            "relative": [
+              -0.038001,
+              0.017955
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "ratio_0.95",
+      "label": "Critical ratio 0.95",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.95,
+      "critical_ratio": 0.95,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 213870.543,
+        "scaled_fractile": 224974.4275,
+        "optimizer": 201159.54,
+        "optimizer_unit": 204930.0085,
+        "unconstrained": 140213.1295
+      },
+      "best_within_capacity": "optimizer",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 201159.54,
+          "baseline_cost": 224974.4275,
+          "difference": -23814.8875,
+          "relative": -0.105856,
+          "weeks_won": 35,
+          "weeks_lost": 17,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -47135.471887,
+              209.339225
+            ],
+            "relative": [
+              -0.227823,
+              0.000995
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 201159.54,
+          "baseline_cost": 213870.543,
+          "difference": -12711.003,
+          "relative": -0.059433,
+          "weeks_won": 31,
+          "weeks_lost": 21,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -23706.095463,
+              3304.295887
+            ],
+            "relative": [
+              -0.125547,
+              0.016544
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "ratio_0.98",
+      "label": "Critical ratio 0.98",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 2.45,
+      "critical_ratio": 0.98,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 517967.778,
+        "scaled_fractile": 591553.66,
+        "optimizer": 468185.252,
+        "optimizer_unit": 494354.0185,
+        "unconstrained": 209589.1185
+      },
+      "best_within_capacity": "optimizer",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 468185.252,
+          "baseline_cost": 591553.66,
+          "difference": -123368.408,
+          "relative": -0.20855,
+          "weeks_won": 40,
+          "weeks_lost": 12,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -180992.89965,
+              -58966.67045
+            ],
+            "relative": [
+              -0.337573,
+              -0.099809
+            ]
+          },
+          "checks": [],
+          "verdict": "lower"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 468185.252,
+          "baseline_cost": 517967.778,
+          "difference": -49782.526,
+          "relative": -0.096111,
+          "weeks_won": 33,
+          "weeks_lost": 19,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -81893.285763,
+              -4171.4693
+            ],
+            "relative": [
+              -0.183103,
+              -0.008318
+            ]
+          },
+          "checks": [],
+          "verdict": "lower"
+        }
+      ]
+    },
+    {
+      "id": "trailing_13",
+      "label": "History: trailing 13 weeks",
+      "window": "trailing_13",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 87238.6095,
+        "scaled_fractile": 98001.5275,
+        "optimizer": 84225.097,
+        "optimizer_unit": 83324.3805,
+        "unconstrained": 97834.681
+      },
+      "best_within_capacity": "optimizer_unit",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 84225.097,
+          "baseline_cost": 98001.5275,
+          "difference": -13776.4305,
+          "relative": -0.140574,
+          "weeks_won": 44,
+          "weeks_lost": 8,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -18374.459637,
+              -7061.013825
+            ],
+            "relative": [
+              -0.185946,
+              -0.07599
+            ]
+          },
+          "checks": [],
+          "verdict": "lower"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 84225.097,
+          "baseline_cost": 87238.6095,
+          "difference": -3013.5125,
+          "relative": -0.034543,
+          "weeks_won": 30,
+          "weeks_lost": 22,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -5276.880475,
+              2332.249487
+            ],
+            "relative": [
+              -0.058334,
+              0.029704
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "seasonal_analog",
+      "label": "History: same 13 weeks a year earlier",
+      "window": "seasonal_analog",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 89065.1255,
+        "scaled_fractile": 87247.3355,
+        "optimizer": 91182.875,
+        "optimizer_unit": 89001.306,
+        "unconstrained": 89189.803
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 91182.875,
+          "baseline_cost": 87247.3355,
+          "difference": 3935.5395,
+          "relative": 0.045108,
+          "weeks_won": 20,
+          "weeks_lost": 32,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -137.568438,
+              8146.78125
+            ],
+            "relative": [
+              -0.001619,
+              0.103615
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 91182.875,
+          "baseline_cost": 89065.1255,
+          "difference": 2117.7495,
+          "relative": 0.023778,
+          "weeks_won": 18,
+          "weeks_lost": 34,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -1029.22615,
+              5695.554475
+            ],
+            "relative": [
+              -0.012916,
+              0.068604
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "originally_cleaned",
+      "label": "Data as originally cleaned",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "none",
+      "registry": false,
+      "normalize_case": false,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 83785.4495,
+        "scaled_fractile": 79648.317,
+        "optimizer": 82685.679,
+        "optimizer_unit": 81214.2295,
+        "unconstrained": 77293.072
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 82685.679,
+          "baseline_cost": 79648.317,
+          "difference": 3037.362,
+          "relative": 0.038135,
+          "weeks_won": 21,
+          "weeks_lost": 31,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              169.774275,
+              6571.134725
+            ],
+            "relative": [
+              0.00236,
+              0.082172
+            ]
+          },
+          "checks": [],
+          "verdict": "higher"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 82685.679,
+          "baseline_cost": 83785.4495,
+          "difference": -1099.7705,
+          "relative": -0.013126,
+          "weeks_won": 28,
+          "weeks_lost": 24,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -3654.134525,
+              2607.732162
+            ],
+            "relative": [
+              -0.048235,
+              0.032384
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "all_exact_credits",
+      "label": "All exactly matched credits removed as known",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "all_exact",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 81939.813,
+        "scaled_fractile": 77936.02175,
+        "optimizer": 80606.13425,
+        "optimizer_unit": 79409.40775,
+        "unconstrained": 76080.316
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 80606.13425,
+          "baseline_cost": 77936.02175,
+          "difference": 2670.1125,
+          "relative": 0.03426,
+          "weeks_won": 22,
+          "weeks_lost": 30,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -532.515437,
+              6151.317012
+            ],
+            "relative": [
+              -0.007611,
+              0.07886
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 80606.13425,
+          "baseline_cost": 81939.813,
+          "difference": -1333.67875,
+          "relative": -0.016276,
+          "weeks_won": 28,
+          "weeks_lost": 24,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -4450.503244,
+              2479.281562
+            ],
+            "relative": [
+              -0.05926,
+              0.03157
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "bulk_cap",
+      "label": "History capped at each SKU's 99th-percentile order (added after an exploratory result favored it)",
+      "window": "trailing_52",
+      "closure_weeks": "drop",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": 0.99,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 80323.407,
+        "scaled_fractile": 78644.668,
+        "optimizer": 79161.838,
+        "optimizer_unit": 78850.8915,
+        "unconstrained": 74767.7435
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 79161.838,
+          "baseline_cost": 78644.668,
+          "difference": 517.17,
+          "relative": 0.006576,
+          "weeks_won": 23,
+          "weeks_lost": 29,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -2099.19105,
+              3492.348313
+            ],
+            "relative": [
+              -0.029528,
+              0.045467
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 79161.838,
+          "baseline_cost": 80323.407,
+          "difference": -1161.569,
+          "relative": -0.014461,
+          "weeks_won": 23,
+          "weeks_lost": 29,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -2309.396462,
+              1552.918325
+            ],
+            "relative": [
+              -0.029202,
+              0.021886
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    },
+    {
+      "id": "closure_weeks_kept",
+      "label": "Closure weeks kept as zero-sales history",
+      "window": "trailing_52",
+      "closure_weeks": "zero",
+      "capacity_factor": 1.0,
+      "holding_rate": 0.05,
+      "shortage_rate": 0.3,
+      "critical_ratio": 0.857143,
+      "bulk_cap_quantile": null,
+      "reversals": "prompt",
+      "registry": true,
+      "normalize_case": true,
+      "capacity_units": 6455,
+      "costs": {
+        "proportional": 82095.0745,
+        "scaled_fractile": 77909.2695,
+        "optimizer": 80943.688,
+        "optimizer_unit": 79512.9375,
+        "unconstrained": 76402.588
+      },
+      "best_within_capacity": "scaled_fractile",
+      "comparisons": [
+        {
+          "baseline": "scaled_fractile",
+          "policy_cost": 80943.688,
+          "baseline_cost": 77909.2695,
+          "difference": 3034.4185,
+          "relative": 0.038948,
+          "weeks_won": 20,
+          "weeks_lost": 32,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              392.4536,
+              6171.299125
+            ],
+            "relative": [
+              0.005438,
+              0.080071
+            ]
+          },
+          "checks": [],
+          "verdict": "higher"
+        },
+        {
+          "baseline": "proportional",
+          "policy_cost": 80943.688,
+          "baseline_cost": 82095.0745,
+          "difference": -1151.3865,
+          "relative": -0.014025,
+          "weeks_won": 28,
+          "weeks_lost": 24,
+          "weeks_tied": 0,
+          "policy": "optimizer",
+          "confidence": 0.95,
+          "block_weeks": 4,
+          "interval": {
+            "difference": [
+              -3706.452137,
+              2441.817025
+            ],
+            "relative": [
+              -0.04902,
+              0.031157
+            ]
+          },
+          "checks": [],
+          "verdict": "no clear difference"
+        }
+      ]
+    }
+  ],
+  "bridge": [
+    {
+      "step": "original",
+      "label": "Published design",
+      "train_weeks": 42,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-19",
+      "capacity_units": 7060,
+      "skus": 20,
+      "skus_added": "",
+      "skus_removed": "",
+      "optimizer_cost": 24208.823,
+      "scaled_fractile_cost": 23352.256,
+      "proportional_cost": 27971.869,
+      "optimizer_vs_proportional": -0.13453,
+      "optimizer_vs_scaled_fractile": 0.03668
+    },
+    {
+      "step": "prompt_reversals",
+      "label": "Remove sales reversed within 24 hours",
+      "train_weeks": 42,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-19",
+      "capacity_units": 7032,
+      "skus": 20,
+      "skus_added": "20685",
+      "skus_removed": "23166",
+      "optimizer_cost": 24112.9995,
+      "scaled_fractile_cost": 23384.763,
+      "proportional_cost": 23821.605,
+      "optimizer_vs_proportional": 0.012232,
+      "optimizer_vs_scaled_fractile": 0.031141
+    },
+    {
+      "step": "code_registry",
+      "label": "Exclude charge, accounting, voucher and manual codes",
+      "train_weeks": 42,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-19",
+      "capacity_units": 7249,
+      "skus": 20,
+      "skus_added": "21175",
+      "skus_removed": "DOT",
+      "optimizer_cost": 23780.485,
+      "scaled_fractile_cost": 23207.0425,
+      "proportional_cost": 23071.4745,
+      "optimizer_vs_proportional": 0.030731,
+      "optimizer_vs_scaled_fractile": 0.02471
+    },
+    {
+      "step": "case_normalization",
+      "label": "Merge stock codes that differ only in case",
+      "train_weeks": 42,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-19",
+      "capacity_units": 7250,
+      "skus": 20,
+      "skus_added": "",
+      "skus_removed": "",
+      "optimizer_cost": 23776.1375,
+      "scaled_fractile_cost": 23232.5935,
+      "proportional_cost": 23069.7135,
+      "optimizer_vs_proportional": 0.030621,
+      "optimizer_vs_scaled_fractile": 0.023396
+    },
+    {
+      "step": "complete_weeks",
+      "label": "Complete weeks only",
+      "train_weeks": 40,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-12",
+      "capacity_units": 7689,
+      "skus": 20,
+      "skus_added": "21621 22178 22469",
+      "skus_removed": "23298 48138 48194",
+      "optimizer_cost": 24187.784,
+      "scaled_fractile_cost": 23880.5235,
+      "proportional_cost": 23330.193,
+      "optimizer_vs_proportional": 0.036759,
+      "optimizer_vs_scaled_fractile": 0.012867
+    },
+    {
+      "step": "training_prices",
+      "label": "Prices from the training weeks only",
+      "train_weeks": 40,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-12",
+      "capacity_units": 7689,
+      "skus": 20,
+      "skus_added": "",
+      "skus_removed": "",
+      "optimizer_cost": 24187.784,
+      "scaled_fractile_cost": 23880.5235,
+      "proportional_cost": 23330.193,
+      "optimizer_vs_proportional": 0.036759,
+      "optimizer_vs_scaled_fractile": 0.012867
+    },
+    {
+      "step": "inverse_ecdf_capacity",
+      "label": "Capacity from the smallest optimal quantities",
+      "train_weeks": 40,
+      "holdout_weeks": 12,
+      "first_holdout_week": "2011-09-12",
+      "capacity_units": 7689,
+      "skus": 20,
+      "skus_added": "",
+      "skus_removed": "",
+      "optimizer_cost": 24187.784,
+      "scaled_fractile_cost": 23880.5235,
+      "proportional_cost": 23330.193,
+      "optimizer_vs_proportional": 0.036759,
+      "optimizer_vs_scaled_fractile": 0.012867
+    }
+  ],
+  "forecasts": [
+    {
+      "method": "Trailing 52 weeks",
+      "wape": 0.694165,
+      "bias": 0.192203,
+      "mae": 179.314838,
+      "pinball_loss": 62.294643,
+      "window": "trailing_52"
+    },
+    {
+      "method": "Trailing 13 weeks",
+      "wape": 0.660576,
+      "bias": 0.10903,
+      "mae": 170.63832,
+      "pinball_loss": 65.493956,
+      "window": "trailing_13"
+    },
+    {
+      "method": "Same 13 weeks a year earlier",
+      "wape": 0.737281,
+      "bias": 0.241163,
+      "mae": 190.452318,
+      "pinball_loss": 67.380495,
+      "window": "seasonal_analog"
+    }
+  ],
+  "largest_week": {
+    "sku": "84347",
+    "description": "ROTATING SILVER ANGELS T-LIGHT HLDR",
+    "week": "2010-11-01",
+    "units": 9679,
+    "typical_units": 35.0,
+    "ratio": 276.542857,
+    "invoice": "530715",
+    "line_units": 9360,
+    "line_time": "2010-11-04T11:36:00",
+    "anonymous": false,
+    "credit": null
+  },
+  "data": {
+    "sheets": {
+      "rows": {
+        "Year 2009-2010": 525461,
+        "Year 2010-2011": 541910
+      },
+      "overlap_rows": 22523,
+      "combined_rows": 1044848
+    },
+    "country_stages": [
+      {
+        "stage": "accepted",
+        "rows": 937632,
+        "units": 9221072,
+        "value": 17465896.337
+      },
+      {
+        "stage": "merchandise",
+        "rows": 935153,
+        "units": 9209191,
+        "value": 16856330.94
+      },
+      {
+        "stage": "after_prompt_reversals",
+        "rows": 934107,
+        "units": 8999135,
+        "value": 16515913.43
+      },
+      {
+        "stage": "complete_weeks",
+        "rows": 904260,
+        "units": 8723607,
+        "value": 15993518.56
+      },
+      {
+        "stage": "study_cohort",
+        "rows": 42972,
+        "units": 597770,
+        "value": 1832576.5
+      }
+    ],
+    "prompt_pairs": 1347,
+    "country_prompt_pairs": 1075,
+    "country_prompt_units": 210153,
+    "cohort_prompt_pairs": 63,
+    "cohort_prompt_units": 4084,
+    "largest_prompt_pairs": [
+      {
+        "sku": "23843",
+        "units": 80995,
+        "sale_invoice": "581483",
+        "credit_invoice": "C581484",
+        "sale_time": "2011-12-09T09:15:00",
+        "lag_minutes": 12.0
+      },
+      {
+        "sku": "23166",
+        "units": 74215,
+        "sale_invoice": "541431",
+        "credit_invoice": "C541433",
+        "sale_time": "2011-01-18T10:01:00",
+        "lag_minutes": 16.0
+      },
+      {
+        "sku": "22920",
+        "units": 1515,
+        "sale_invoice": "556484",
+        "credit_invoice": "C556522",
+        "sale_time": "2011-06-12T13:17:00",
+        "lag_minutes": 1324.0
+      },
+      {
+        "sku": "47587A",
+        "units": 1200,
+        "sale_invoice": "508333",
+        "credit_invoice": "C508334",
+        "sale_time": "2010-05-14T12:00:00",
+        "lag_minutes": 4.0
+      },
+      {
+        "sku": "71477",
+        "units": 1152,
+        "sale_invoice": "529350",
+        "credit_invoice": "C529352",
+        "sale_time": "2010-10-28T09:29:00",
+        "lag_minutes": 3.0
+      }
+    ],
+    "closure_weeks": [
+      "2009-12-28",
+      "2010-12-27"
+    ],
+    "first_complete_week": "2009-12-07",
+    "last_complete_week": "2011-11-28"
+  }
+}

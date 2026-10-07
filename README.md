@@ -5,21 +5,35 @@ II data. It cleans the transactions, selects 20 recurring products from the trai
 compares three demand forecasts, and allocates a 7,060-unit weekly capacity with an empirical
 newsvendor model.
 
-![Decision summary](exports/decision_summary.svg)
-
 ## Results
 
-On the final 12 weeks, the optimized allocation had a modeled cost of **£24,209**, compared
-with **£27,972** for proportional mean allocation. Both policies used 7,060 units per week.
-Fill rate increased from **56.7%** to **65.0%**.
+<!-- results:start -->
+Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal optimizer's modeled cost was 4.0% higher than the scaled critical-fractile rule's (95% interval 0.6% to 8.3% higher; it cost less in 20 of the 52 weeks and more in 32). Against proportional allocation, there was no clear difference: 1.3% lower in total (95% interval from 4.9% lower to 3.3% higher; it cost less in 27 of the 52 weeks and more in 25). The lowest modeled cost within the limit was the scaled critical-fractile rule's (£77,909); the unconstrained newsvendor, which ignores the limit, came to £76,403.
 
-The largest change was SKU 23166. Its training data contains one 74,215-unit week, while
-its median positive week is about 82 units. That single order pushes the mean high enough
-for the proportional baseline to assign 1,899 units every week. The optimizer assigns 82.
-Before using this SKU in a recurring forecast, I would check whether the large order was a
-wholesale event or a source-data error.
+| Policy | Modeled cost | Fill rate | Mean leftover units |
+| --- | ---: | ---: | ---: |
+| Proportional to recent mean | £82,095 | 76.9% | 2,480 |
+| Scaled critical-fractile | £77,909 | 77.8% | 2,434 |
+| Marginal optimizer | £81,045 | 77.4% | 2,456 |
+| Marginal optimizer, equal prices | £79,513 | 77.9% | 2,431 |
+| Unconstrained newsvendor (reference, ignores the limit) | £76,403 | 88.4% | 5,132 |
 
-The full tables are in [exports/insight_report.md](exports/insight_report.md).
+![Cumulative weekly difference in modeled cost between the marginal optimizer and each baseline](exports/cost_difference.svg)
+
+Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, clearly higher in 0 and not clearly different in 10. Full tables: [exports/insight_report.md](exports/insight_report.md).
+
+**From the published figure to this one.** Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's.
+
+| Step | Training / holdout weeks | Capacity | Marginal optimizer | Scaled critical-fractile | Proportional | Optimizer vs proportional |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Published design | 42 / 12 | 7,060 | £24,209 | £23,352 | £27,972 | 13.5% lower |
+| Remove sales reversed within 24 hours | 42 / 12 | 7,032 | £24,113 | £23,385 | £23,822 | 1.2% higher |
+| Exclude charge, accounting, voucher and manual codes | 42 / 12 | 7,249 | £23,780 | £23,207 | £23,071 | 3.1% higher |
+| Merge stock codes that differ only in case | 42 / 12 | 7,250 | £23,776 | £23,233 | £23,070 | 3.1% higher |
+| Complete weeks only | 40 / 12 | 7,689 | £24,188 | £23,881 | £23,330 | 3.7% higher |
+| Prices from the training weeks only | 40 / 12 | 7,689 | £24,188 | £23,881 | £23,330 | 3.7% higher |
+| Capacity from the smallest optimal quantities | 40 / 12 | 7,689 | £24,188 | £23,881 | £23,330 | 3.7% higher |
+<!-- results:end -->
 
 ## Model
 
