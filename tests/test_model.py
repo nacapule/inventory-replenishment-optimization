@@ -579,6 +579,23 @@ class ValidationTests(unittest.TestCase):
         mixed = [Decimal("2"), np.int64(3), 4.0, Fraction(4)]
         self.assertEqual(model.optimize_capacity({"A": mixed}, None, 1, 4, None), {"A": 4})
 
+    def test_numpy_float_rates_keep_their_printed_decimal(self):
+        rates = np.float32(0.05), np.float32(0.30)
+        self.assertEqual(model.critical_ratio(*rates), Fraction(6, 7))
+        self.assertEqual(model.newsvendor_targets({"A": list(range(7))}, *rates), {"A": 5})
+        self.assertEqual(model.critical_ratio(np.float64(0.05), np.float64(0.30)), Fraction(6, 7))
+
+    def test_dates_and_durations_are_rejected(self):
+        duration = np.timedelta64(2, "ns")
+        self.assertRejected(model.newsvendor_targets, {"A": [duration]}, 1, 1)
+        self.assertRejected(model.newsvendor_targets, {"A": np.array([duration])}, 1, 1)
+        self.assertRejected(model.scale_to_capacity, {"A": duration}, None)
+        self.assertRejected(model.optimize_capacity, {"A": [1]}, {"A": duration}, 1, 4, None)
+        self.assertRejected(model.newsvendor_targets, {"A": [np.datetime64("2011-01-03")]}, 1, 1)
+        policy = model.fixed_targets({"A": 1})
+        self.assertRejected(model.simulate, ["A"], [[1]], np.array([duration]), policy, None, 1, 1)
+        self.assertRejected(model.simulate, ["A"], np.array([[duration]]), [1.0], policy, None, 1, 1)
+
     def test_numpy_integer_rates_stay_exact(self):
         shortage = Fraction("0.30000000000000000001")
         self.assertEqual(model.critical_ratio(np.int64(1), "0.30000000000000000001"), shortage / (1 + shortage))

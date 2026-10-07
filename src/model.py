@@ -47,8 +47,8 @@ _RECORD_FIELDS = ("opening", "ordered", "start", "sales", "covered", "lost", "cl
 
 def _exact(value: object) -> Fraction | None:
     """The exact value of a finite real number, or None for anything else (booleans,
-    strings, complex numbers, NaN, infinities)."""
-    if isinstance(value, (bool, np.bool_)):
+    strings, complex numbers, dates and durations, NaN, infinities)."""
+    if isinstance(value, (bool, np.bool_, np.timedelta64, np.datetime64)):
         return None
     if isinstance(value, numbers.Rational):
         return Fraction(int(value.numerator), int(value.denominator))
@@ -70,7 +70,9 @@ def _rate(value: object, name: str) -> Fraction:
             rate = None
     elif isinstance(value, numbers.Real) and not isinstance(value, (numbers.Rational, bool)):
         number = float(value)
-        rate = Fraction(repr(number)) if math.isfinite(number) else None
+        # NumPy floats print their own shortest decimal (float32 0.05 prints as 0.05).
+        text = str(value) if isinstance(value, np.floating) else repr(number)
+        rate = Fraction(text) if math.isfinite(number) else None
     else:
         rate = _exact(value)
     if rate is None:
@@ -104,6 +106,8 @@ def _capacity(value: object) -> int | None:
 def _units(values: object, name: str) -> np.ndarray:
     """An int64 array of non-negative whole units. Every value must equal an integer
     exactly; integral floats are accepted, booleans, strings and NaN are not."""
+    if isinstance(values, np.ndarray) and values.dtype.kind not in "iufO":
+        raise ValueError(f"{name} must contain numbers of units, not {values.dtype}")
     if isinstance(values, np.ndarray) and values.dtype.kind in "iuf":
         array = values
         if array.dtype.kind == "f":
@@ -177,6 +181,8 @@ def _sorted_history(values: object, sku: str) -> list[int]:
 
 def _price_matrix(prices: object, shape: tuple[int, int]) -> np.ndarray:
     """Prices as floats of shape (weeks, SKUs), from one price per SKU or one per SKU-week."""
+    if isinstance(prices, np.ndarray) and prices.dtype.kind not in "iufO":
+        raise ValueError(f"prices must be numbers, not {prices.dtype}")
     if isinstance(prices, np.ndarray) and prices.dtype.kind in "iuf":
         price = prices.astype(np.float64)
     else:
