@@ -131,8 +131,49 @@ class WordingTests(unittest.TestCase):
         without = copy.deepcopy(current)
         without["largest_week"]["credit"] = None
         text = report._largest(without)
-        self.assertIn("No credit in the source matches that line.", text)
+        self.assertIn("No credit matches that line under the exact-matching rule.", text)
         self.assertNotIn("credit C", text)
+
+    def test_sensitivity_counts_of_zero_read_as_never(self):
+        current = copy.deepcopy(summary())
+        verdicts = [("higher", "lower"), ("higher", "no clear difference"),
+                    ("no clear difference", "no clear difference")]
+        for entry, pair in zip(current["sensitivity"][1:], verdicts, strict=True):
+            for item, verdict in zip(entry["comparisons"], pair, strict=True):
+                item["verdict"] = verdict
+        sentence = report._sensitivity(current)[1]
+        self.assertIn("modeled cost was clearly higher than the scaled critical-fractile rule's in 2, "
+                      "not clearly different in 1 and never clearly lower;", sentence)
+        self.assertIn("against proportional allocation, clearly lower in 1, not clearly different in 2 "
+                      "and never clearly higher.", sentence)
+        self.assertNotIn(" in 0", sentence)
+
+    def test_readme_bridge_sentence_leaves_out_the_scaled_rule(self):
+        current = summary()
+        self.assertIn("than the scaled critical-fractile rule's", report.insight_values(current)["bridge_sentence"])
+        self.assertNotIn("scaled critical-fractile", report.readme_values(current)["bridge_sentence"])
+
+    def test_bridge_steps_that_change_nothing_are_named(self):
+        current = copy.deepcopy(summary())
+        bridge = current["bridge"]
+        for index, row in enumerate(bridge):  # every step changes the capacity
+            row.update(capacity_units=100 + index, skus_added="", skus_removed="")
+        self.assertNotIn("left the products", report._bridge_sentence(current))
+        bridge[2] = dict(bridge[1], step=bridge[2]["step"], label=bridge[2]["label"])
+        self.assertIn(f'The step "{bridge[2]["label"]}" left the products, the capacity and every cost as in '
+                      f'the row before.', report._bridge_sentence(current))
+        bridge[3] = dict(bridge[2], step=bridge[3]["step"], label=bridge[3]["label"])
+        self.assertIn(f'The steps "{bridge[2]["label"]}" and "{bridge[3]["label"]}" left',
+                      report._bridge_sentence(current))
+        bridge[3]["skus_added"] = "12345"  # a new product in the cohort is a change
+        self.assertNotIn(bridge[3]["label"], report._bridge_sentence(current))
+
+    def test_critical_ratio_shows_its_fraction_only_when_rounded(self):
+        self.assertEqual(report._ratio(0.05, 0.30), "0.8571 (6/7)")
+        self.assertEqual(report._ratio(0.05, 0.95), "0.9500")
+        self.assertEqual(report._ratio(0.25, 0.75), "0.7500")
+        text = report.render("insight_report.md", report.insight_values(summary()))
+        self.assertIn("p / (h + p) = 0.8571 (6/7)", text)
 
 
 class SummaryTests(unittest.TestCase):

@@ -20,7 +20,7 @@ Each decision draws on a **history window** of past weeks (trailing 52 weeks), l
 
 ## Cost model
 
-A week's modeled cost is a holding charge on the units left over plus a shortage charge on the recorded sales that stock did not cover. The holding rate h is 5.0% of the price per unit left at the end of a week; the shortage rate p is 30.0% of the price per unit of sales not covered. Both rates are assumptions, not measured costs. Only their ratio, the **critical ratio** p / (h + p) = 0.8571, changes which stock levels minimize cost over the history. Multiplying both rates by the same amount scales every policy's cost in pounds alike. Total modeled cost sums these charges over the evaluation weeks.
+A week's modeled cost is a holding charge on the units left over plus a shortage charge on the recorded sales that stock did not cover. The holding rate h is 5.0% of the price per unit left at the end of a week; the shortage rate p is 30.0% of the price per unit of sales not covered. Both rates are assumptions, not measured costs. Only their ratio, the **critical ratio** p / (h + p) = 0.8571 (6/7), changes which stock levels minimize cost over the history. Multiplying both rates by the same amount scales every policy's cost in pounds alike. Total modeled cost sums these charges over the evaluation weeks.
 
 The marginal optimizer chooses stock for all products together:
 
@@ -106,7 +106,7 @@ Products are sorted by the first cost-difference column, largest first.
 
 Each row changes one factor of the primary configuration: the capacity, the critical ratio, how the history is built, or what counts as a sale. The original-cleaning row switches off all three data corrections together (reversal removal, the code registry and upper-case matching); the capped-history row caps each invoice's quantity of a product, in the history only, at the percentile its label names, computed over the history window and rounded up. The cohort and the limit stay fixed, except that capacity rows apply their own factor to the same mean weekly sales. All rows were declared before any result was computed, except the one whose label says otherwise.
 
-Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, clearly higher in 0 and not clearly different in 10.
+Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, not clearly different in 10 and never clearly higher.
 
 | Scenario | Capacity | Optimizer vs scaled critical-fractile | Optimizer vs proportional to recent mean | Lowest cost within the limit |
 | --- | ---: | ---: | ---: | --- |
@@ -129,7 +129,7 @@ This **bridge** walks from the design this project first published to the curren
 
 Each later row adds one correction, reselects the products and recomputes capacity under the rules then in force. From the complete-weeks row on, the holdout is the last 12 complete weeks and training is every complete week before them. The scaled critical-fractile column was not part of the first design; it is computed at every row for reference. Every row keeps the single holdout and fixed targets, so the bridge ends at the corrected version of that design, not at the weekly study above.
 
-Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's.
+Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's. The steps "Prices from the training weeks only" and "Capacity from the smallest optimal quantities" left the products, the capacity and every cost as in the row before.
 
 | Step | Training / holdout weeks | Capacity | Cohort changes | Marginal optimizer | Scaled critical-fractile | Proportional | Optimizer vs proportional |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: |
@@ -155,7 +155,7 @@ Each window's mean is the proportional rule's estimate of next week's sales; its
 
 The largest spike in a cohort product's weekly sales, relative to its median selling week, and whether a credit matches its largest line:
 
-The largest single week for a cohort product, relative to its typical selling week, was 9,679 units of 84347 (ROTATING SILVER ANGELS T-LIGHT HLDR) in the week of 1 November 2010, 277 times its median selling week of 35 units. Its largest line was invoice 530715 (9,360 units, a known customer). No credit in the source matches that line.
+The largest single week for a cohort product, relative to its typical selling week, was 9,679 units of 84347 (ROTATING SILVER ANGELS T-LIGHT HLDR) in the week of 1 November 2010, 277 times its median selling week of 35 units. Its largest line was invoice 530715 (9,360 units, a known customer). No credit matches that line under the exact-matching rule.
 
 ## Next-week targets
 

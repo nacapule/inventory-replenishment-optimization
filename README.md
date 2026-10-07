@@ -25,9 +25,9 @@ Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal o
 
 The figure adds up, week by week, the marginal optimizer's modeled cost minus each baseline's; below zero, the optimizer had cost less so far.
 
-Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, clearly higher in 0 and not clearly different in 10. The [results report](exports/insight_report.md) has the quarter, product and sensitivity tables.
+Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, not clearly different in 10 and never clearly higher. The [results report](exports/insight_report.md) has the quarter, product and sensitivity tables.
 
-**From the first published design, one correction at a time.** Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's.
+**From the first published design, one correction at a time.** Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's. The steps "Prices from the training weeks only" and "Capacity from the smallest optimal quantities" left the products, the capacity and every cost as in the row before.
 
 | Step | Training / holdout weeks | Capacity | Marginal optimizer | Scaled critical-fractile | Proportional | Optimizer vs proportional |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

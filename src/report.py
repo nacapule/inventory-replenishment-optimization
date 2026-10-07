@@ -12,6 +12,7 @@ import math
 import platform
 import shutil
 import string
+from fractions import Fraction
 from importlib import metadata
 from pathlib import Path
 
@@ -22,6 +23,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 
 import experiment
+import model
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / "templates"
@@ -364,15 +366,26 @@ def _headline(summary) -> str:
     return " ".join(sentences + [text + "."])
 
 
-def _bridge_sentence(summary) -> str:
-    first, last = summary["bridge"][0], summary["bridge"][-1]
+def _bridge_sentence(summary, compact=False) -> str:
+    """The bridge in words; `compact` (the README, whose table has no scaled column) leaves out
+    the comparison with the scaled critical-fractile rule. Steps that left the products, the
+    capacity and every cost as in the row before are named."""
+    bridge = summary["bridge"]
+    first, last = bridge[0], bridge[-1]
     proportional, scaled = PHRASES["proportional"] + "'s", PHRASES["scaled_fractile"] + "'s"
     text = (f"Rerun as originally designed, {PHRASES['optimizer']}'s modeled cost was "
             f"{compared(first['optimizer_vs_proportional'], proportional)}.")
-    if len(summary["bridge"]) > 1:
-        text += (f" With all {len(summary['bridge']) - 1} corrections applied, it was "
-                 f"{compared(last['optimizer_vs_proportional'], proportional)} and "
-                 f"{compared(last['optimizer_vs_scaled_fractile'], scaled)}.")
+    if len(bridge) > 1:
+        text += (f" With all {len(bridge) - 1} corrections applied, it was "
+                 f"{compared(last['optimizer_vs_proportional'], proportional)}"
+                 + ("." if compact else f" and {compared(last['optimizer_vs_scaled_fractile'], scaled)}."))
+    same = ("capacity_units", "optimizer_cost", "scaled_fractile_cost", "proportional_cost")
+    unchanged = [f'"{row["label"]}"' for before, row in zip(bridge, bridge[1:])
+                 if not row["skus_added"] and not row["skus_removed"] and all(row[k] == before[k] for k in same)]
+    if unchanged:
+        steps = unchanged[0] if len(unchanged) == 1 else ", ".join(unchanged[:-1]) + " and " + unchanged[-1]
+        text += (f" The step{'s' if len(unchanged) > 1 else ''} {steps} left the products, the capacity and "
+                 f"every cost as in the row before.")
     return text
 
 
@@ -407,9 +420,15 @@ def _sensitivity(summary):
         lower, higher, unclear = (counts.get((item["baseline"], kind), 0)
                                   for kind in ("lower", "higher", "no clear difference"))
         name = PHRASES[item["baseline"]]
-        parts.append((f"clearly lower than {name}'s in {lower}" if number == 0 else
-                      f"against {name}, clearly lower in {lower}")
-                     + f", clearly higher in {higher} and not clearly different in {unclear}")
+        found = [(f"clearly {kind}", "than", count) for kind, count in (("lower", lower), ("higher", higher)) if count]
+        found += [("not clearly different", "from", unclear)] if unclear else []
+        found += [(f"never clearly {kind}", "than", None) for kind, count in (("lower", lower), ("higher", higher))
+                  if not count]
+        words = [phrase + (f" {preposition} {name}'s" if number == 0 and index == 0 else "")
+                 + ("" if count is None else f" in {count}")
+                 for index, (phrase, preposition, count) in enumerate(found)]
+        listed = words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
+        parts.append(listed if number == 0 else f"against {name}, {listed}")
     others = len(summary["sensitivity"]) - 1
     sentence = (f"Across the {others} sensitivities, {PHRASES[comparisons[0]['policy']]}'s modeled cost was "
                 + "; ".join(parts) + ".") if others else ""
@@ -427,7 +446,15 @@ def _largest(summary) -> str:
         return text + (f" That line was later matched by credit {credit['invoice']}, {credit['lag_days']:,.1f} days "
                        f"after the sale; credits later than a day stay in the credit ledger and are not removed "
                        f"from sales.")
-    return text + " No credit in the source matches that line."
+    return text + " No credit matches that line under the exact-matching rule."
+
+
+def _ratio(holding, shortage) -> str:
+    """The critical ratio to four places, with its exact fraction when the four places round it."""
+    exact = model.critical_ratio(holding, shortage)
+    text = f"{float(exact):.4f}"
+    return text + (f" ({exact.numerator}/{exact.denominator})"
+                   if Fraction(text) != exact and exact.denominator <= 1000 else "")
 
 
 def insight_values(summary: dict) -> dict:
@@ -462,7 +489,7 @@ def insight_values(summary: dict) -> dict:
         "selection_first": day(study["selection"]["first_week"]), "selection_last": day(study["selection"]["last_week"], 6),
         "evaluation_first": day(study["evaluation"]["first_week"]), "evaluation_last": day(study["evaluation"]["last_day"]),
         "evaluation_weeks": study["evaluation"]["weeks"], "holding_pct": pct(study["holding_rate"]),
-        "shortage_pct": pct(study["shortage_rate"]), "critical_ratio": f"{study['critical_ratio']:.4f}",
+        "shortage_pct": pct(study["shortage_rate"]), "critical_ratio": _ratio(study["holding_rate"], study["shortage_rate"]),
         "window_label": study["window_label"].lower(), "min_active_weeks": study["min_active_weeks"],
         "confidence": f"{level}%", "block_weeks": comparisons[0]["block_weeks"],
         "policy_table": table(_policy_rows(summary), ["Policy", "Within the limit", "Modeled cost", "Holding",
@@ -558,7 +585,7 @@ def readme_values(summary: dict) -> dict:
     return {"headline": _headline(summary), "figure": f"exports/{FIGURE}",
             "policy_table": table(_policy_rows(summary, compact=True),
                                   ["Policy", "Modeled cost", "Fill rate", "Mean leftover units"], "lrrr"),
-            "sensitivity_sentence": _sensitivity(summary)[1], "bridge_sentence": _bridge_sentence(summary),
+            "sensitivity_sentence": _sensitivity(summary)[1], "bridge_sentence": _bridge_sentence(summary, compact=True),
             "bridge_table": _bridge_table(summary, compact=True)}
 
 
