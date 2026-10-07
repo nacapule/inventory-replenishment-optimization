@@ -1,5 +1,6 @@
 """Tests for reading, classifying and aggregating the invoice lines."""
 
+import hashlib
 import math
 import random
 import sys
@@ -247,6 +248,10 @@ class CalendarTests(unittest.TestCase):
         matrix = data.SalesPanel(ledger, data.PRIMARY_RULES, UK).matrix(skus=["A1", "B2", "C3"])
         self.assertEqual(matrix.to_numpy().tolist(), [[3, 0, 0], [0, 5, 0], [0, 0, 0], [3, 0, 0]])
 
+    def test_a_ledger_without_dated_rows_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "no dated source rows"):
+            data.calendar(classify(line("1", "A1", 1, "not a date")))
+
     def test_week_ending_on_the_last_source_day_is_complete(self):
         ledger = classify(line("1", "A1", 1, "2011-03-07 00:00"), line("2", "A1", 1, "2011-03-13 23:00"))
         self.assertEqual(data.calendar(ledger)["complete"].tolist(), [True])
@@ -299,6 +304,19 @@ class BulkCapTests(unittest.TestCase):
                          .tolist(), plain.drop(index=[pd.Timestamp("2011-03-21"), pd.Timestamp("2011-04-04")])
                          .to_numpy().tolist())
 
+
+    def test_caps_use_only_the_lines_inside_the_window(self):
+        panel = data.SalesPanel(classify(line("1", "A1", 5, "2011-03-01"), line("1", "A1", 7, "2011-03-02")),
+                                data.PRIMARY_RULES, UK)
+        self.assertEqual(panel.bulk_caps(end="2011-03-02", cutoff="2011-03-02").to_dict(), {"A1": 5})
+        self.assertEqual(panel.bulk_caps().to_dict(), {"A1": 12})
+
+    def test_caps_must_be_whole_units(self):
+        panel = data.SalesPanel(self.ledger(), data.PRIMARY_RULES, UK)
+        for caps in ({"A1": 2.5}, {"A1": -1}):
+            with self.assertRaises(ValueError):
+                panel.matrix(caps=caps)
+        self.assertEqual(panel.matrix(caps={"A1": np.nan}).to_numpy().tolist(), panel.matrix().to_numpy().tolist())
 
     def test_caps_count_a_reversed_order_only_until_its_credit_is_known(self):
         lines = [line(str(i), "A1", 1, f"2011-03-0{1 + i % 5} 10:00") for i in range(9)]
@@ -465,6 +483,16 @@ class WorkbookReadingTests(unittest.TestCase):
         self.assertEqual(data.reconciliation(ledger)["rows"].sum(), 7)
         self.assertEqual(ledger["customer_id"].tolist()[:2], [13085, 16321])
 
+    def test_overlap_compares_values_not_inferred_types(self):
+        early, shared, late = self.rows()
+        blank = [[581588, 22139, "TEA SET", None, pd.Timestamp("2011-12-09 12:55"), 4.95, 12680.0, "France"]]
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write(directory, early + shared, shared + late + blank)
+            sheets = pd.read_excel(path, sheet_name=list(data.SHEETS))
+            combined = data.read_workbook(path, overlap_rows=2, union_rows=6)
+        self.assertEqual([str(sheets[name]["Quantity"].dtype) for name in data.SHEETS], ["int64", "float64"])
+        self.assertEqual(roles(data.classify(combined, registry=REGISTRY))[-1], "invalid")
+
     def test_differing_overlap_is_rejected(self):
         early, shared, late = self.rows()
         changed = [shared[0][:3] + [7] + shared[0][4:], shared[1]]
@@ -526,7 +554,12 @@ class RealWorkbookTests(unittest.TestCase):
         self.assertEqual(data.repeated_lines(self.ledger)["repeated_rows"].tolist(), [6_865, 5_268])
 
     def test_original_treatment_reproduces_the_published_inputs(self):
-        """Fixtures: weekly_demand_matrix(clean_transactions(...)) at commit 0e33242, 2010-2011 sheet."""
+        """Fixtures: weekly_demand_matrix(clean_transactions(...)) at commit 0e33242, 2010-2011 sheet.
+
+        original_weekly_units.csv holds the 20 published SKUs, weekly totals and active-SKU
+        counts; original_digests.csv holds SHA-256 digests of every non-zero SKU-week
+        ("week,sku,units" lines sorted) and every SKU price ("sku,repr(price)" sorted).
+        """
         expected = pd.read_csv(FIXTURES / "original_weekly_units.csv", index_col="week_start", parse_dates=True)
         prices = pd.read_csv(FIXTURES / "original_prices.csv", dtype={"sku": str}, float_precision="round_trip")
         prices = prices.set_index("sku")["price"]
@@ -539,6 +572,16 @@ class RealWorkbookTests(unittest.TestCase):
         self.assertEqual(matrix.sum(axis=1).tolist(), expected["all_skus"].tolist())
         self.assertEqual(matrix.gt(0).sum(axis=1).tolist(), expected["active_skus"].tolist())
         self.assertEqual(panel.prices(skus=skus).tolist(), prices.loc[skus].tolist())
+        digests = pd.read_csv(FIXTURES / "original_digests.csv").set_index("table")
+        cells = matrix.stack()
+        cells = cells[cells.ne(0)]
+        weekly = "\n".join(f"{week:%Y-%m-%d},{sku},{units}" for (week, sku), units in sorted(cells.items()))
+        all_prices = panel.prices()
+        price_text = "\n".join(f"{sku},{float(all_prices[sku])!r}" for sku in sorted(all_prices.index))
+        self.assertEqual((len(cells), hashlib.sha256(weekly.encode()).hexdigest()),
+                         tuple(digests.loc["weekly_units", ["rows", "sha256"]]))
+        self.assertEqual((len(all_prices), hashlib.sha256(price_text.encode()).hexdigest()),
+                         tuple(digests.loc["prices", ["rows", "sha256"]]))
 
 
 if __name__ == "__main__":

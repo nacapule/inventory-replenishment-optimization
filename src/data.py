@@ -115,7 +115,12 @@ def combine_sheets(first, second, overlap_rows=None, union_rows=None) -> pd.Data
 
 
 def _multiset(frame: pd.DataFrame) -> Counter:
-    return Counter(map(repr, frame[list(COLUMNS.values())].itertuples(index=False, name=None)))
+    """Rows as comparable values: text as text, numbers as floats, blanks as None."""
+    canonical = pd.DataFrame({
+        name: _text(frame[name]) if name in ("invoice", "stock_code", "description", "country")
+        else frame[name] if name == "timestamp" else pd.to_numeric(frame[name], errors="coerce").astype(float)
+        for name in COLUMNS.values()}).astype(object)
+    return Counter(map(tuple, canonical.where(canonical.notna(), None).itertuples(index=False, name=None)))
 
 
 def load_registry(path=REGISTRY_PATH) -> pd.DataFrame:
@@ -284,6 +289,8 @@ def calendar(ledger: pd.DataFrame) -> pd.DataFrame:
     dates; a closure week has no source row in any country.
     """
     stamps = ledger.loc[~ledger["overlap"] & ledger["timestamp"].notna(), ["timestamp", "invoice"]]
+    if stamps.empty:
+        raise ValueError("the ledger has no dated source rows")
     first, last = stamps["timestamp"].min(), stamps["timestamp"].max()
     weeks = pd.date_range(_monday(first), _monday(last), freq="7D", name="week_start")
     activity = stamps.groupby(_monday(stamps["timestamp"])).agg(
@@ -344,7 +351,7 @@ class SalesPanel:
         self._cell = self._week * len(self.skus) + self._sku
         self._group = lines.groupby([self._week, lines["invoice"], self._sku], sort=False).ngroup().to_numpy()
         first = pd.Series(np.arange(len(lines))).groupby(self._group).first().to_numpy()
-        self._group_sku, self._group_stamp, self._group_cell = self._sku[first], self._stamp[first], self._cell[first]
+        self._group_sku, self._group_cell = self._sku[first], self._cell[first]
         self._positions = {self.skus[i]: where for i, where in pd.Series(self._sku).groupby(self._sku).indices.items()}
 
     def _cutoff(self, cutoff) -> int:
@@ -362,8 +369,8 @@ class SalesPanel:
             return np.rint(units).astype("int64"), revenue
         group_units, group_revenue = self._invoice_totals(kept)
         limit = pd.Series(caps, dtype=float).reindex(self.skus).fillna(np.inf).to_numpy()
-        if (limit < 0).any():
-            raise ValueError("caps must be non-negative")
+        if (limit < 0).any() or (limit[np.isfinite(limit)] % 1 != 0).any():
+            raise ValueError("caps must be whole numbers of units, at least zero")
         capped = np.minimum(group_units, limit[self._group_sku])
         scale = np.divide(capped, group_units, out=np.zeros_like(capped), where=group_units > 0)
         units = np.bincount(self._group_cell, capped, minlength=size)
@@ -405,9 +412,8 @@ class SalesPanel:
         share = Fraction(str(quantile))
         if not 0 <= share <= 1:
             raise ValueError("quantile must be between 0 and 1")
-        group_units, _ = self._invoice_totals(self._kept(cutoff))
-        inside = (self._group_stamp >= _stamp(start, -NEVER)) & (self._group_stamp < _stamp(end, NEVER))
-        inside &= group_units > 0
+        group_units, _ = self._invoice_totals(self._in_window(start, end, cutoff))
+        inside = group_units > 0
         sku, values = self._group_sku[inside], group_units[inside].astype("int64")
         order = np.lexsort((values, sku))
         sku, values = sku[order], values[order]
@@ -432,10 +438,12 @@ class SalesPanel:
             result[sku] = float(np.median(price[where])) if where.size else math.nan
         return pd.Series(result, dtype=float, name="price").rename_axis("sku")
 
+    def _in_window(self, start=None, end=None, cutoff=None) -> np.ndarray:
+        return self._kept(cutoff) & (self._stamp >= _stamp(start, -NEVER)) & (self._stamp < _stamp(end, NEVER))
+
     def window(self, start=None, end=None, cutoff=None) -> pd.DataFrame:
         """Kept lines in [start, end) as known at the cutoff."""
-        mask = self._kept(cutoff) & (self._stamp >= _stamp(start, -NEVER)) & (self._stamp < _stamp(end, NEVER))
-        return self.lines.loc[mask]
+        return self.lines.loc[self._in_window(start, end, cutoff)]
 
     def concentration(self, start=None, end=None, cutoff=None, skus=None) -> pd.DataFrame:
         """Anonymous, top-customer and top-invoice shares of each SKU's units."""
