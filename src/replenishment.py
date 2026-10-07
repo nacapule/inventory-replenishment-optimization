@@ -57,10 +57,14 @@ def verify(config_path, input_path, output) -> list[str]:
     config = experiment.load_config(config_path)
     recorded = json.loads((output / report.MANIFEST).read_text(encoding="utf-8"))
     problems = []
-    current = report.source_hashes(config_path=Path(config_path))
-    for name, digest in recorded["sources"].items():
-        if current.get(name) != digest:
+    current = report.source_hashes(Path(config_path))
+    for name in sorted(set(current) | set(recorded["sources"])):
+        if current.get(name) != recorded["sources"].get(name):
             problems.append(f"{name} differs from the file the manifest records")
+    try:
+        report.check_bundle(output)
+    except RuntimeError as error:
+        problems.append(f"the published bundle does not match its manifest: {error}")
     if check_input(config, input_path)["sha256"] != recorded["input"]["sha256"]:
         problems.append("the workbook differs from the one the manifest records")
     with tempfile.TemporaryDirectory() as folder:

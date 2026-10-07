@@ -11,6 +11,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from functools import cache
 from pathlib import Path
+from unittest import mock
 
 import matplotlib
 import numpy as np
@@ -70,6 +71,25 @@ class WordingTests(unittest.TestCase):
         self.assertIn("the same in 52", text)
         self.assertEqual(report.change(0.0004), "less than 0.1% higher")
 
+    def test_zero_baseline_costs_are_not_compared_in_relative_terms(self):
+        samples = {4: experiment.block_indices(8, 4, 50, seed=1)}
+        both_zero = report._plain(experiment.compare(np.zeros(8), np.zeros(8), samples, 0.95))
+        only_baseline_zero = report._plain(experiment.compare(np.ones(8), np.zeros(8), samples, 0.95))
+        self.assertEqual((both_zero["relative"], only_baseline_zero["relative"]), (0.0, None))
+        for result, expected in ((both_zero, "equal to the scaled"), (only_baseline_zero, "not comparable")):
+            item = dict(result, policy="optimizer", baseline="scaled_fractile", confidence=0.95,
+                        interval=result["intervals"]["4"])
+            with self.subTest(expected=expected):
+                self.assertIn(expected, report.describe(item, 8))
+                self.assertIn("Against the scaled", report.describe(item, 8, lead=False))
+        self.assertEqual(report.verdict(dict(interval=only_baseline_zero["intervals"]["4"])), "higher")
+        bridge = copy.deepcopy(summary())
+        bridge["bridge"][0]["optimizer_vs_proportional"] = 0.0
+        bridge["bridge"][-1]["optimizer_vs_scaled_fractile"] = None
+        sentence = report._bridge_sentence(bridge)
+        self.assertIn("was equal to proportional allocation's.", sentence)
+        self.assertIn("not comparable in relative terms with the scaled critical-fractile rule's", sentence)
+
     def test_generated_prose_never_states_a_negative_change(self):
         for weeks in (52, 13):
             values = report.insight_values(summary(weeks))
@@ -86,6 +106,23 @@ class WordingTests(unittest.TestCase):
             path = Path(folder) / "figure.svg"
             report.write_cost_difference_figure(report.weekly_cost(synthetic.result(13).primary), NAMES, path)
             self.assertIn("(13 weeks)", path.read_text(encoding="utf-8"))
+
+    def test_report_ranks_bias_by_distance_from_zero_and_names_the_capacity_exceptions(self):
+        text = report.render("insight_report.md", report.insight_values(summary()))
+        self.assertIn("bias is better the closer it is to zero", text)
+        self.assertNotIn("Lower is better on each", text)
+        self.assertIn("every scenario, except that the capacity sensitivities apply their own factor", text)
+
+    def test_next_week_is_dated_and_called_the_partial_week_only_when_it_is(self):
+        cases = {52: ("2011-12-05", "5 December 2011, the first after the evaluation weeks and the workbook's "
+                                    "last, partial week, from"),
+                 13: ("2011-03-07", "7 March 2011, the first after the evaluation weeks, from")}
+        for weeks, (monday, text) in cases.items():
+            current = summary(weeks)
+            with self.subTest(weeks=weeks):
+                self.assertEqual(current["study"]["decision_week"], monday)
+                self.assertIn(f"the week starting {text}", report.render("insight_report.md",
+                                                                         report.insight_values(current)))
 
     def test_largest_week_cites_a_credit_only_when_one_exists(self):
         current = summary()
@@ -209,6 +246,23 @@ class BundleTests(unittest.TestCase):
                 report.publish(output, write)
             self.assertEqual({path.name: path.read_bytes() for path in output.iterdir()}, before)
             self.assertEqual(sorted(path.name for path in self.folder.iterdir()), ["exports"])
+
+        rename = Path.rename
+
+        def swap_fails(path, target):
+            if path.name.endswith(".staging"):
+                raise OSError("rename failed")
+            return rename(path, target)
+
+        with mock.patch.object(Path, "rename", swap_fails), self.assertRaises(OSError):
+            report.publish(output, lambda folder: report.write_bundle(synthetic.result(), folder, CONFIG, INFO))
+        self.assertEqual({path.name: path.read_bytes() for path in output.iterdir()}, before)
+        self.assertEqual(sorted(path.name for path in self.folder.iterdir()), ["exports"])
+
+        output.rename(self.folder / "exports.previous")  # as if a swap had been cut off
+        with self.assertRaises(OSError):
+            report.publish(output, failing)
+        self.assertEqual({path.name: path.read_bytes() for path in output.iterdir()}, before)
 
 
 class ReadmeTests(unittest.TestCase):

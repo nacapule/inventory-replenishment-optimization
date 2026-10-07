@@ -76,6 +76,17 @@ class CommandLineTests(unittest.TestCase):
         self.assertIn("reference without the limit: Unconstrained newsvendor", out)
         code, out, _ = run("verify", "--config", self.config, "--input", self.workbook, "--output", exports)
         self.assertEqual((code, out.strip()), (0, "verify: every artifact matches"))
+        manifest = exports / report.MANIFEST
+        original = manifest.read_text(encoding="utf-8")
+        record = json.loads(original)
+        record["artifacts"]["summary.json"]["sha256"] = "0" * 64
+        del record["sources"]["src/experiment.py"]
+        manifest.write_text(json.dumps(record), encoding="utf-8")
+        code, _, err = run("verify", "--config", self.config, "--input", self.workbook, "--output", exports)
+        self.assertEqual(code, 1)
+        self.assertIn("src/experiment.py differs from the file the manifest records", err)
+        self.assertIn("summary.json is missing or does not match the manifest", err)
+        manifest.write_text(original, encoding="utf-8")
         with open(exports / "weekly_sales.csv", "a", encoding="utf-8") as handle:
             handle.write("tampered\n")
         code, _, err = run("verify", "--config", self.config, "--input", self.workbook, "--output", exports)
@@ -92,6 +103,21 @@ class CommandLineTests(unittest.TestCase):
         rows = json.loads((exports / "summary.json").read_text())["policies"]
         self.assertEqual({row["id"]: row["allocated_units"] == 0 for row in rows},
                          {policy: policy != "unconstrained" for policy in replenishment.experiment.POLICIES})
+
+    def test_zero_shortage_rate_runs_and_undefined_ratios_are_unavailable(self):
+        self.config.write_text(self.config.read_text().replace("shortage_rate = 0.30", "shortage_rate = 0.0", 1),
+                               encoding="utf-8")
+        exports = self.folder / "exports"
+        code, _, err = run("analyze", "--config", self.config, "--input", self.workbook, "--output", exports)
+        self.assertEqual((code, err), (0, ""))
+        summary = json.loads((exports / "summary.json").read_text(encoding="utf-8"))
+        costs = {row["id"]: row["total_cost"] for row in summary["policies"]}
+        self.assertEqual(costs["optimizer"], 0)  # no shortage cost: holding nothing is optimal
+        for entry in summary["comparisons"]:
+            expected = 0 if costs[entry["baseline"]] == 0 else -1
+            self.assertEqual(entry["relative"], expected)
+        report_text = (exports / "insight_report.md").read_text(encoding="utf-8")
+        self.assertNotRegex(report_text, r"\b(nan|NaN|None)\b")
 
     def test_readme_command_rewrites_the_block(self):
         exports = self.folder / "exports"

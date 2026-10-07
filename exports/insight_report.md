@@ -8,7 +8,7 @@ Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal o
 
 The study follows 20 products sold in the United Kingdom through 52 weeks, from 6 December 2010 to 4 December 2011. At the start of every week each policy chooses how many units of each product to hold, using only the sales and prices recorded before that week began. Units left at the end of a week are carried into the next week, and sales beyond the units on hand are lost. Replenishment arrives at once (zero lead time).
 
-Total stock at the start of a week may not exceed 6,455 units. This is a hypothetical storage limit, counted in units because the data has no product sizes. It equals the cohort's mean weekly sales (6,455.3 units) over the 51 weeks with invoices in the selection year (7 December 2009 to 5 December 2010), rounded to a whole unit. The products are the 20 with the highest revenue that year among those sold in at least 26 of its 52 weeks. The cohort and the limit were fixed before the first evaluation week and are the same for every policy and every scenario.
+Total stock at the start of a week may not exceed 6,455 units. This is a hypothetical storage limit, counted in units because the data has no product sizes. It equals the cohort's mean weekly sales (6,455.3 units) over the 51 weeks with invoices in the selection year (7 December 2009 to 5 December 2010), rounded to a whole unit. The products are the 20 with the highest revenue that year among those sold in at least 26 of its 52 weeks. The cohort and the limit were fixed before the first evaluation week and are the same for every policy and every scenario, except that the capacity sensitivities apply their own factor to the same mean.
 
 Sales means invoiced merchandise units after removing orders that the same customer reversed with an equal credit within 24 hours. It stands in for the sales that stock could have covered. The data report, [data_quality.md](data_quality.md), shows how every source line was classified.
 
@@ -137,7 +137,7 @@ The proportional rule uses each window's mean as next week's estimate; the uncon
 | Trailing 13 weeks | 66.1% | 10.9% | 170.6 | 65.5 |
 | Same 13 weeks a year earlier | 73.7% | 24.1% | 190.5 | 67.4 |
 
-WAPE is the total absolute error divided by total sales. Bias is the total error divided by total sales (positive when the estimates ran high). MAE is the mean absolute error per product-week, in units. Pinball loss scores the quantile at the critical ratio, in units per product-week. Lower is better on each.
+WAPE is the total absolute error divided by total sales. Bias is the total error divided by total sales (positive when the estimates ran high). MAE is the mean absolute error per product-week, in units. Pinball loss scores the quantile at the critical ratio, in units per product-week. Lower is better for WAPE, MAE and pinball loss; bias is better the closer it is to zero.
 
 ## Largest week
 
@@ -145,4 +145,4 @@ The largest single week for a cohort product, relative to its typical selling we
 
 ## Next week
 
-`sku_decisions.csv` lists the stock each policy would set for the week starting 5 December 2011, from the trailing 52 weeks before it, with nothing carried in.
+`sku_decisions.csv` lists the stock each policy would set for the week starting 5 December 2011, the first after the evaluation weeks and the workbook's last, partial week, from the complete weeks among the trailing 52 weeks before it, with nothing carried in.

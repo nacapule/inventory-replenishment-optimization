@@ -14,8 +14,7 @@ min_active_weeks = 26          # sold in at least this many selection weeks
 selection_weeks = 52           # complete weeks that choose the products and the capacity
 evaluation_weeks = 52          # complete weeks re-planned and scored, after the selection weeks
 
-[comparison]
-policy = "optimizer"
+[comparison]  # the marginal optimizer is compared with each of these
 baselines = ["scaled_fractile", "proportional"]
 
 [primary]

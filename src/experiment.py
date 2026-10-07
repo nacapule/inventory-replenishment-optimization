@@ -85,7 +85,6 @@ class Config:
     min_active_weeks: int
     selection_weeks: int
     evaluation_weeks: int
-    policy: str
     baselines: tuple[str, ...]
     primary: Scenario
     sensitivities: tuple[Scenario, ...]
@@ -141,7 +140,7 @@ SCENARIO_KEYS = ("id", "label", "data", "window", "closure_weeks", "capacity_fac
 def _scenario(table, base: Scenario | None) -> Scenario:
     required = ("id", "label") + (() if base else ("data", "window", "closure_weeks", "capacity_factor",
                                                     "holding_rate", "shortage_rate"))
-    _keys(table, SCENARIO_KEYS, f"scenario {table.get('id', '?')!r}", required)
+    _keys(table, SCENARIO_KEYS, "a scenario", required)
     name = f"scenario {table['id']!r}"
     rules = dict(vars(base.rules)) if base else {}
     rules.update(_keys(table.get("data", {}), ("reversals", "registry", "normalize_case"), f"{name} data"))
@@ -157,6 +156,8 @@ def _scenario(table, base: Scenario | None) -> Scenario:
     if holding == 0 and shortage == 0:
         raise ConfigError(f"{name}: holding_rate and shortage_rate cannot both be zero")
     cap = table.get("bulk_cap_quantile")
+    if cap is not None and _exact(cap, f"{name} bulk_cap_quantile", positive=True) > 1:
+        raise ConfigError(f"{name}: bulk_cap_quantile must be at most 1")
     return Scenario(
         id=str(table["id"]), label=str(table["label"]), rules=rules,
         window=_choice(table.get("window", base and base.window), WINDOWS, f"{name} window"),
@@ -171,7 +172,7 @@ def _scenario(table, base: Scenario | None) -> Scenario:
 TABLES = {  # every key is required
     "input": ("sha256", "bytes", "country", "reversal_window_hours"),
     "cohort": ("skus", "min_active_weeks", "selection_weeks", "evaluation_weeks"),
-    "comparison": ("policy", "baselines"),
+    "comparison": ("baselines",),
     "bootstrap": ("block_weeks", "check_block_weeks", "resamples", "seed", "confidence"),
     "bridge": ("sheet", "skus", "min_active_weeks", "holdout_weeks", "capacity_share", "steps"),
 }
@@ -191,6 +192,8 @@ def parse_config(raw: dict) -> Config:
         _keys(raw[name], keys, name, keys)
     counts = {field: _count(raw[table][key], f"{table} {key}", low) for field, (table, key, low) in COUNTS.items()}
     source, compare, boot, bridge = raw["input"], raw["comparison"], raw["bootstrap"], raw["bridge"]
+    if not isinstance(raw.get("sensitivity", []), list):
+        raise ConfigError("sensitivities must be an array of tables, [[sensitivity]]")
     primary = _scenario(raw["primary"], None)
     sensitivities = tuple(_scenario(table, primary) for table in raw.get("sensitivity", []))
     if len({scenario.id for scenario in (primary, *sensitivities)}) != 1 + len(sensitivities):
@@ -202,8 +205,8 @@ def parse_config(raw: dict) -> Config:
         raise ConfigError("min_active_weeks cannot exceed selection_weeks")
     if not isinstance(compare["baselines"], list) or not compare["baselines"]:
         raise ConfigError("comparison baselines must be a non-empty list")
-    policy = _choice(compare["policy"], POLICIES, "comparison policy")
-    baselines = tuple(_choice(name, set(POLICIES) - {policy}, "comparison baseline") for name in compare["baselines"])
+    baselines = tuple(_choice(name, set(POLICIES) - {"optimizer"}, "comparison baseline")
+                      for name in compare["baselines"])
     if not isinstance(boot["check_block_weeks"], list):
         raise ConfigError("check_block_weeks must be a list")
     blocks = tuple(_count(value, "bootstrap block length") for value in [boot["block_weeks"], *boot["check_block_weeks"]])
@@ -217,7 +220,7 @@ def parse_config(raw: dict) -> Config:
     if not isinstance(source["country"], str):
         raise ConfigError("country must be text")
     return Config(
-        sha256=sha, country=source["country"], policy=policy, baselines=baselines, primary=primary,
+        sha256=sha, country=source["country"], baselines=baselines, primary=primary,
         sensitivities=sensitivities, block_weeks=blocks[0], check_block_weeks=blocks[1:],
         confidence=_exact(boot["confidence"], "confidence", positive=True, below_one=True),
         bridge_sheet=_choice(bridge["sheet"], data.SHEETS, "bridge sheet"),
@@ -381,7 +384,7 @@ def run_scenario(study: Study, scenario: Scenario, blocks=None) -> ScenarioResul
     config = study.config
     blocks = blocks or (config.block_weeks,)
     samples = {block: block_indices(len(study.evaluation), block, config.resamples, config.seed) for block in blocks}
-    reference = runs[config.policy].cost.sum(axis=1)
+    reference = runs["optimizer"].cost.sum(axis=1)
     comparisons = [dict(baseline=baseline, **compare(reference, runs[baseline].cost.sum(axis=1), samples,
                                                      config.confidence))
                    for baseline in config.baselines]
@@ -389,6 +392,13 @@ def run_scenario(study: Study, scenario: Scenario, blocks=None) -> ScenarioResul
 
 
 # Comparisons ------------------------------------------------------------------------------
+
+
+def relative(a, b):
+    """a / b - 1, elementwise: 0 when both are zero, NaN when only b is."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    safe = np.where(b != 0, b, 1.0)
+    return np.where(b != 0, a / safe - 1, np.where(a == 0, 0.0, np.nan))
 
 
 def block_indices(weeks: int, block: int, resamples: int, seed: int) -> np.ndarray:
@@ -409,17 +419,14 @@ def compare(policy_cost, baseline_cost, samples, confidence) -> dict:
     tail = (1 - float(confidence)) / 2
     result = {
         "policy_cost": float(a.sum()), "baseline_cost": float(b.sum()), "difference": float(a.sum() - b.sum()),
-        "relative": float(a.sum() / b.sum() - 1) if b.sum() else math.nan,
+        "relative": float(relative(a.sum(), b.sum())),
         "weeks_won": int((a < b).sum()), "weeks_lost": int((a > b).sum()), "weeks_tied": int((a == b).sum()),
         "intervals": {},
     }
     for block, positions in samples.items():
         total_a, total_b = a[positions].sum(axis=1), b[positions].sum(axis=1)
-        difference = total_a - total_b
-        with np.errstate(divide="ignore", invalid="ignore"):
-            relative = total_a / total_b - 1
-        low, high = np.quantile(difference, [tail, 1 - tail])
-        rel_low, rel_high = np.quantile(relative, [tail, 1 - tail])
+        low, high = np.quantile(total_a - total_b, [tail, 1 - tail])
+        rel_low, rel_high = np.quantile(relative(total_a, total_b), [tail, 1 - tail])
         result["intervals"][block] = {"difference": [float(low), float(high)],
                                       "relative": [float(rel_low), float(rel_high)]}
     return result
@@ -480,19 +487,20 @@ def forecast_metrics(study: Study, scenario: Scenario) -> pd.DataFrame:
 
 
 def next_targets(study: Study, scenario: Scenario) -> pd.DataFrame:
-    """The stock each policy would set for the week after the evaluation year (nothing
+    """The stock each policy would set for the week after the evaluation weeks (nothing
     carried), with the statistics of the history window it uses."""
     t = study.evaluation[-1] + WEEK
     plan, weeks = study.plan(scenario, t), study.history_weeks(t, scenario.window, scenario.closures)
+    end = weeks[-1] + WEEK
     h, p = scenario.holding_rate, scenario.shortage_rate
     capacity = capacity_units(scenario.capacity_factor, study.mean_units)
     newsvendor = model.newsvendor_targets(plan.histories, h, p)
     history = pd.DataFrame(plan.histories)
     panel = study.panel(scenario.rules)
-    shares = panel.concentration(weeks[0], t, cutoff=t, skus=study.cohort)
+    shares = panel.concentration(weeks[0], end, cutoff=t, skus=study.cohort)
     frame = pd.DataFrame({
         "sku": list(study.cohort),
-        "description": panel.descriptions(weeks[0], t, skus=study.cohort).to_numpy(),
+        "description": panel.descriptions(weeks[0], end, skus=study.cohort).to_numpy(),
         "unit_price": [plan.prices[sku] for sku in study.cohort],
         "train_mean": history.mean().to_numpy(), "train_std": history.std().to_numpy(),
         "train_positive_median": history.where(history > 0).median().to_numpy(),
@@ -575,7 +583,9 @@ def published_bridge(config: Config, source: pd.DataFrame) -> pd.DataFrame:
         applied.add(step)
         rules = data.DataRules("prompt" if "prompt_reversals" in applied else "none",
                                "code_registry" in applied, "case_normalization" in applied)
-        panel = panels.setdefault(rules, data.SalesPanel(ledger, rules, config.country))
+        if rules not in panels:
+            panels[rules] = data.SalesPanel(ledger, rules, config.country)
+        panel = panels[rules]
         weeks = pd.DatetimeIndex(calendar.loc[calendar["complete"] | ("complete_weeks" not in applied), "week_start"])
         train, holdout = weeks[:-config.bridge_holdout_weeks], weeks[-config.bridge_holdout_weeks:]
         start = holdout[0]
@@ -596,8 +606,8 @@ def published_bridge(config: Config, source: pd.DataFrame) -> pd.DataFrame:
             "skus_added": " ".join(sorted(set(skus) - set(previous or skus))),
             "skus_removed": " ".join(sorted(set(previous or skus) - set(skus))),
             **{f"{policy}_cost": cost for policy, cost in costs.items()},
-            "optimizer_vs_proportional": costs["optimizer"] / costs["proportional"] - 1,
-            "optimizer_vs_scaled_fractile": costs["optimizer"] / costs["scaled_fractile"] - 1,
+            "optimizer_vs_proportional": float(relative(costs["optimizer"], costs["proportional"])),
+            "optimizer_vs_scaled_fractile": float(relative(costs["optimizer"], costs["scaled_fractile"])),
             "cohort": " ".join(skus),
         })
         previous = skus

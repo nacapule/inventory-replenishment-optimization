@@ -8,7 +8,7 @@ $headline
 
 The study follows $cohort_size products sold in the $country through $evaluation_weeks weeks, from $evaluation_first to $evaluation_last. At the start of every week each policy chooses how many units of each product to hold, using only the sales and prices recorded before that week began. Units left at the end of a week are carried into the next week, and sales beyond the units on hand are lost. Replenishment arrives at once (zero lead time).
 
-Total stock at the start of a week may not exceed $capacity units. This is a hypothetical storage limit, counted in units because the data has no product sizes. It equals $capacity_basis over the $open_selection_weeks weeks with invoices in the selection year ($selection_first to $selection_last), rounded to a whole unit. The products are the $cohort_size with the highest revenue that year among those sold in at least $min_active_weeks of its $selection_weeks weeks. The cohort and the limit were fixed before the first evaluation week and are the same for every policy and every scenario.
+Total stock at the start of a week may not exceed $capacity units. This is a hypothetical storage limit, counted in units because the data has no product sizes. It equals $capacity_basis over the $open_selection_weeks weeks with invoices in the selection year ($selection_first to $selection_last), rounded to a whole unit. The products are the $cohort_size with the highest revenue that year among those sold in at least $min_active_weeks of its $selection_weeks weeks. The cohort and the limit were fixed before the first evaluation week and are the same for every policy and every scenario, except that the capacity sensitivities apply their own factor to the same mean.
 
 Sales means invoiced merchandise units after removing orders that the same customer reversed with an equal credit within $reversal_hours hours. It stands in for the sales that stock could have covered. The data report, [data_quality.md](data_quality.md), shows how every source line was classified.
 
@@ -77,7 +77,7 @@ The proportional rule uses each window's mean as next week's estimate; the uncon
 
 $forecast_table
 
-WAPE is the total absolute error divided by total sales. Bias is the total error divided by total sales (positive when the estimates ran high). MAE is the mean absolute error per product-week, in units. Pinball loss scores the quantile at the critical ratio, in units per product-week. Lower is better on each.
+WAPE is the total absolute error divided by total sales. Bias is the total error divided by total sales (positive when the estimates ran high). MAE is the mean absolute error per product-week, in units. Pinball loss scores the quantile at the critical ratio, in units per product-week. Lower is better for WAPE, MAE and pinball loss; bias is better the closer it is to zero.
 
 ## Largest week
 
@@ -85,4 +85,4 @@ $largest_week
 
 ## Next week
 
-`sku_decisions.csv` lists the stock each policy would set for the week starting $decision_week, from the $window_label before it, with nothing carried in.
+`sku_decisions.csv` lists the stock each policy would set for the week starting $decision_week, the first after the evaluation weeks$decision_note, from the complete weeks among the $window_label before it, with nothing carried in.

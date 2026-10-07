@@ -47,7 +47,8 @@
     "critical_ratio": 0.857143,
     "window": "trailing_52",
     "window_label": "Trailing 52 weeks",
-    "min_active_weeks": 26
+    "min_active_weeks": 26,
+    "decision_week": "2011-12-05"
   },
   "settings": {
     "reversal_hours": 24,
@@ -1756,6 +1757,10 @@
       "2010-12-27"
     ],
     "first_complete_week": "2009-12-07",
-    "last_complete_week": "2011-11-28"
+    "last_complete_week": "2011-11-28",
+    "partial_weeks": [
+      "2009-11-30",
+      "2011-12-05"
+    ]
   }
 }

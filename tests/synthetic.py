@@ -42,7 +42,6 @@ selection_weeks = 52
 evaluation_weeks = %d
 
 [comparison]
-policy = "optimizer"
 baselines = ["scaled_fractile", "proportional"]
 
 [primary]

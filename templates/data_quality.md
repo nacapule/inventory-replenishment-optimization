@@ -104,7 +104,7 @@ One row per policy over the evaluation weeks of the primary configuration.
 
 ### `sku_decisions.csv`
 
-One row per cohort product: the stock each policy would set for the week after the evaluation year, with nothing carried in.
+One row per cohort product: the stock each policy would set for the week after the evaluation weeks (`decision_week`), with nothing carried in, from the complete weeks with invoices in the primary history window before it.
 
 | Column | Meaning |
 | --- | --- |

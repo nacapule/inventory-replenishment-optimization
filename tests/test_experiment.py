@@ -55,7 +55,8 @@ class ConfigTests(unittest.TestCase):
             ("primary", "holding_rate", math.inf), ("primary", "capacity_factor", -1.0),
             ("primary", "capacity_factor", math.nan), ("primary", "capacity_factor", "1"),
             ("primary", "window", "trailing_8"), ("primary", "closure_weeks", "skip"),
-            ("comparison", "policy", "best"), ("comparison", "baselines", ["scaled", "proportional"]),
+            ("primary", "shortage_rate", -0.3), ("comparison", "baselines", ["scaled", "proportional"]),
+            ("comparison", "baselines", ["optimizer"]), ("comparison", "baselines", "proportional"),
             ("comparison", "baselines", []), ("bootstrap", "resamples", 0), ("bootstrap", "confidence", 1.0),
             ("bootstrap", "block_weeks", 60), ("bridge", "steps", ["prompt_reversals"]),
             ("bridge", "sheet", "Sheet1"), ("input", "sha256", "abc"),
@@ -83,6 +84,11 @@ class ConfigTests(unittest.TestCase):
             lambda c: c["sensitivity"][1].update(data={"reversals": "some"}),
             lambda c: c["sensitivity"][1].update(data={"registry": "yes"}),
             lambda c: c["sensitivity"][2].update(bulk_cap_quantile=0),
+            lambda c: c["sensitivity"][2].update(bulk_cap_quantile=1.1),
+            lambda c: c["comparison"].update(policy="proportional"),
+            lambda c: c.update(primary=[]),
+            lambda c: c.update(sensitivity={"id": "x", "label": "x"}),
+            lambda c: c["sensitivity"].append(["not", "a", "table"]),
             lambda c: c["sensitivity"][2].update(id="primary"),
             lambda c: c["sensitivity"][2].pop("label"),
         ]
@@ -221,6 +227,28 @@ class StudyTests(unittest.TestCase):
                 self.assertTrue((first.sales[:k] == second.sales[:k]).all())
         self.assertFalse((before.runs["optimizer"].sales[k:] == after.runs["optimizer"].sales[k:]).all())
         self.assertFalse((before.prices[k + 1:] == after.prices[k + 1:]).all())
+
+
+class NextWeekTests(unittest.TestCase):
+    def test_targets_are_for_the_week_after_the_evaluation_weeks_from_the_history_window(self):
+        study, primary = synthetic.study(), synthetic.config().primary
+        t = pd.Timestamp("2011-12-05")  # the last evaluation week starts on 28 November
+        expected = {
+            "trailing_52": pd.date_range("2010-12-06", "2011-11-28", freq="7D").drop(pd.Timestamp("2010-12-27")),
+            "seasonal_analog": pd.date_range("2010-12-06", periods=13, freq="7D").drop(pd.Timestamp("2010-12-27")),
+        }
+        for window, weeks in expected.items():
+            frame = experiment.next_targets(study, replace(primary, window=window)).set_index("sku")
+            lines = weekly_oracle(synthetic.lines(), list(study.cohort), weeks[0], weeks[-1] + WEEK)
+            units = lines.groupby(["week", "sku"])["quantity"].sum().unstack(fill_value=0)
+            units = units.reindex(index=weeks, columns=list(study.cohort), fill_value=0)
+            anonymous = lines.loc[lines["customer_id"].isna()].groupby("sku")["quantity"].sum()
+            with self.subTest(window=window):
+                self.assertTrue((frame["decision_week"] == t).all())
+                self.assertTrue(np.allclose(frame["train_mean"], units.mean()))
+                self.assertTrue((frame["active_train_weeks"] == units.gt(0).sum()).all())
+                self.assertTrue(np.allclose(frame["anonymous_share"],
+                                            anonymous.reindex(units.columns, fill_value=0) / units.sum()))
 
 
 class PolicyTests(unittest.TestCase):

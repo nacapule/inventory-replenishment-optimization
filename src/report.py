@@ -59,20 +59,31 @@ def day(value, days=0) -> str:
     return (pd.Timestamp(value) + pd.Timedelta(days, "D")).strftime("%-d %B %Y")
 
 
+def undefined(value) -> bool:
+    return value is None or not math.isfinite(value)
+
+
 def change(value) -> str:
     """A relative difference in words: '4.0% higher', '1.3% lower', 'equal'."""
-    if value == 0:
-        return "equal"
+    if undefined(value) or value == 0:
+        return "n/a" if undefined(value) else "equal"
     return f"{pct(abs(value)) if round(abs(value), 3) else 'less than 0.1%'} {'lower' if value < 0 else 'higher'}"
 
 
 def signed(value) -> str:
     """A relative difference for tables: '+4.0%', '−1.3%'."""
-    return pct(value) if round(abs(value), 3) == 0 else ("+" if value > 0 else "") + pct(value)
+    return pct(value) if undefined(value) or round(abs(value), 3) == 0 else ("+" if value > 0 else "") + pct(value)
 
 
 def interval(values) -> str:
     return f"{signed(values[0])} to {signed(values[1])}"
+
+
+def compared(value, name: str) -> str:
+    """'4.0% higher than X', 'equal to X', or a note that X's cost is zero."""
+    if undefined(value):
+        return f"not comparable in relative terms with {name}, which is zero"
+    return f"equal to {name}" if value == 0 else f"{change(value)} than {name}"
 
 
 def table(rows, header, align: str) -> str:
@@ -83,6 +94,8 @@ def table(rows, header, align: str) -> str:
 
 def verdict(comparison) -> str:
     low, high = comparison["interval"]["relative"]
+    if undefined(low) or undefined(high):  # a resampled baseline cost of zero
+        low, high = comparison["interval"]["difference"]
     return "lower" if high < 0 else "higher" if low > 0 else "no clear difference"
 
 
@@ -97,6 +110,9 @@ def describe(comparison, weeks: int, lead: bool = True) -> str:
     level = int(round(comparison["confidence"] * 100))
     if low == high == 0:
         spread = f"the same in every resample; {counts}"
+    elif undefined(low) or undefined(high):
+        low, high = comparison["interval"]["difference"]
+        spread = f"{level}% interval of the difference {money(low)} to {money(high)}; {counts}"
     elif kind == "no clear difference":
         spread = f"{level}% interval from {change(low)} to {change(high)}; {counts}"
     else:
@@ -105,10 +121,11 @@ def describe(comparison, weeks: int, lead: bool = True) -> str:
     unclear = kind == "no clear difference"
     if lead:
         subject = PHRASES[comparison["policy"]] + "'s"
-        total = f"equal to {baseline}" if rel == 0 else f"{change(rel)} than {baseline}"
+        total = compared(rel, baseline)
         return (f"{subject[0].upper()}{subject[1:]} modeled cost was {total}"
                 + (", with no clear difference" if unclear else "") + f" ({spread}).")
-    total = "equal in total" if rel == 0 else change(rel) + (" in total" if unclear else "")
+    total = ("equal in total" if rel == 0 else "not comparable in relative terms" if undefined(rel)
+             else change(rel) + (" in total" if unclear else ""))
     opening = "there was no clear difference:" if unclear else "it was"
     return f"Against {PHRASES[comparison['baseline']]}, {opening} {total} ({spread})."
 
@@ -136,7 +153,7 @@ def _comparisons(items, config) -> list:
     for item in items:
         entry = {key: item[key] for key in ("baseline", "policy_cost", "baseline_cost", "difference", "relative",
                                             "weeks_won", "weeks_lost", "weeks_tied")}
-        entry.update(policy=config.policy, confidence=float(config.confidence), block_weeks=config.block_weeks,
+        entry.update(policy="optimizer", confidence=float(config.confidence), block_weeks=config.block_weeks,
                      interval=item["intervals"][config.block_weeks])
         entry["checks"] = [{"block_weeks": block, **values} for block, values in item["intervals"].items()
                            if block != config.block_weeks]
@@ -189,6 +206,7 @@ def summarize(result: experiment.Result) -> dict:
             "holding_rate": float(config.primary.holding_rate), "shortage_rate": float(config.primary.shortage_rate),
             "critical_ratio": float(config.primary.critical_ratio), "window": config.primary.window,
             "window_label": experiment.WINDOWS[config.primary.window][0], "min_active_weeks": config.min_active_weeks,
+            "decision_week": result.decisions["decision_week"].iloc[0],
         },
         "settings": {"reversal_hours": config.reversal_hours, "block_weeks": config.block_weeks,
                      "resamples": config.resamples, "bridge_sheet": config.bridge_sheet,
@@ -213,6 +231,7 @@ def summarize(result: experiment.Result) -> dict:
                                                                "sale_time", "lag_minutes"]].to_dict("records"),
             "closure_weeks": list(study.closures), "first_complete_week": study.complete[0],
             "last_complete_week": study.complete[-1],
+            "partial_weeks": list(study.calendar.loc[~study.calendar["complete"], "week_start"]),
         },
     })
 
@@ -250,7 +269,7 @@ def frames(result: experiment.Result) -> dict:
         row = {**scenario_settings(item.scenario), "capacity_units": item.capacity,
                **{f"{policy['id']}_cost": policy["total_cost"] for policy in rows}}
         for entry in item.comparisons:
-            name = f"{config.policy}_vs_{entry['baseline']}"
+            name = f"optimizer_vs_{entry['baseline']}"
             low, high = entry["intervals"][config.block_weeks]["relative"]
             row.update({name: entry["relative"], f"{name}_low": low, f"{name}_high": high,
                         f"{name}_weeks_won": entry["weeks_won"], f"{name}_weeks_lost": entry["weeks_lost"]})
@@ -349,11 +368,11 @@ def _bridge_sentence(summary) -> str:
     first, last = summary["bridge"][0], summary["bridge"][-1]
     proportional, scaled = PHRASES["proportional"] + "'s", PHRASES["scaled_fractile"] + "'s"
     text = (f"Rerun as originally designed, {PHRASES['optimizer']}'s modeled cost was "
-            f"{change(first['optimizer_vs_proportional'])} than {proportional}.")
+            f"{compared(first['optimizer_vs_proportional'], proportional)}.")
     if len(summary["bridge"]) > 1:
         text += (f" With all {len(summary['bridge']) - 1} corrections applied, it was "
-                 f"{change(last['optimizer_vs_proportional'])} than {proportional} and "
-                 f"{change(last['optimizer_vs_scaled_fractile'])} than {scaled}.")
+                 f"{compared(last['optimizer_vs_proportional'], proportional)} and "
+                 f"{compared(last['optimizer_vs_scaled_fractile'], scaled)}.")
     return text
 
 
@@ -464,7 +483,9 @@ def insight_values(summary: dict) -> dict:
         "bridge_holdout_weeks": settings["bridge_holdout_weeks"],
         "bridge_min_active_weeks": settings["bridge_min_active_weeks"],
         "bridge_share": pct(settings["bridge_capacity_share"], 0),
-        "decision_week": day(study["evaluation"]["last_day"], 1),
+        "decision_week": day(study["decision_week"]),
+        "decision_note": (" and the workbook's last, partial week"
+                          if study["decision_week"] in summary["data"]["partial_weeks"] else ""),
     }
 
 
@@ -604,8 +625,8 @@ def write_bundle(result: experiment.Result, directory: Path, config_path: Path, 
     summary = summarize(result)
     for name, frame in frames(result).items():
         write_csv(frame, directory / name)
-    write_cost_difference_figure(weekly_cost(result.primary), NAMES, directory / FIGURE, result.config.policy,
-                                 result.config.baselines)
+    write_cost_difference_figure(weekly_cost(result.primary), NAMES, directory / FIGURE,
+                                 baselines=result.config.baselines)
     texts = {"insight_report.md": render("insight_report.md", insight_values(summary)),
              "data_quality.md": render("data_quality.md", quality_values(summary, result.tables)),
              "summary.json": json.dumps(summary, indent=2, ensure_ascii=False) + "\n"}
@@ -618,9 +639,11 @@ def write_bundle(result: experiment.Result, directory: Path, config_path: Path, 
 
 def check_bundle(directory: Path) -> None:
     """A bundle is complete when every artifact exists and matches the manifest's hash."""
-    record = json.loads((directory / MANIFEST).read_text(encoding="utf-8"))
+    recorded = json.loads((directory / MANIFEST).read_text(encoding="utf-8")).get("artifacts", {})
+    if set(recorded) != set(ARTIFACTS):
+        raise RuntimeError("the manifest does not list exactly the published artifacts")
     for name in ARTIFACTS:
-        if not (directory / name).is_file() or sha256(directory / name) != record["artifacts"][name]["sha256"]:
+        if not (directory / name).is_file() or sha256(directory / name) != recorded[name].get("sha256"):
             raise RuntimeError(f"{name} is missing or does not match the manifest")
 
 
@@ -629,6 +652,8 @@ def publish(output: Path, write):
     failure the staging folder is removed and the previous bundle stays as it was."""
     output = Path(output)
     staging, previous = (output.with_name(f"{output.name}.{suffix}") for suffix in ("staging", "previous"))
+    if previous.exists() and not output.exists():  # an earlier swap was interrupted
+        previous.rename(output)
     for folder in (staging, previous):
         shutil.rmtree(folder, ignore_errors=True)
     staging.mkdir(parents=True)
@@ -640,6 +665,12 @@ def publish(output: Path, write):
         raise
     if output.exists():
         output.rename(previous)
-    staging.rename(output)
+    try:
+        staging.rename(output)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        if previous.exists():
+            previous.rename(output)
+        raise
     shutil.rmtree(previous, ignore_errors=True)
     return value
