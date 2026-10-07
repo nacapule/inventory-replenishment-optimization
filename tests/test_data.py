@@ -495,6 +495,12 @@ class WorkbookReadingTests(unittest.TestCase):
 
     def test_differing_overlap_is_rejected(self):
         early, shared, late = self.rows()
+        with tempfile.TemporaryDirectory() as directory:
+            for older, newer in (("bad", None), ("bad", "worse")):
+                cells = [shared[0][:3] + [older] + shared[0][4:], shared[1]]
+                twins = [shared[0][:3] + [newer] + shared[0][4:], shared[1]]
+                with self.assertRaisesRegex(ValueError, "overlapping rows differ"):
+                    data.read_workbook(self.write(directory, early + cells, twins + late), None, None)
         changed = [shared[0][:3] + [7] + shared[0][4:], shared[1]]
         with tempfile.TemporaryDirectory() as directory:
             path = self.write(directory, early + changed, shared + late)

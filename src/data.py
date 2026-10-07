@@ -115,12 +115,19 @@ def combine_sheets(first, second, overlap_rows=None, union_rows=None) -> pd.Data
 
 
 def _multiset(frame: pd.DataFrame) -> Counter:
-    """Rows as comparable values: text as text, numbers as floats, blanks as None."""
-    canonical = pd.DataFrame({
-        name: _text(frame[name]) if name in ("invoice", "stock_code", "description", "country")
-        else frame[name] if name == "timestamp" else pd.to_numeric(frame[name], errors="coerce").astype(float)
-        for name in COLUMNS.values()}).astype(object)
+    """Rows as comparable values: numbers as floats, other cells as text, blanks as None."""
+    canonical = pd.DataFrame({name: _value(frame[name]) for name in COLUMNS.values()})
     return Counter(map(tuple, canonical.where(canonical.notna(), None).itertuples(index=False, name=None)))
+
+
+def _value(cells: pd.Series) -> pd.Series:
+    if cells.name == "timestamp":
+        return cells.astype(object)
+    text = _text(cells).astype(object)
+    if cells.name in ("invoice", "stock_code", "description", "country"):
+        return text
+    numbers = pd.to_numeric(cells, errors="coerce").astype(float)
+    return numbers.astype(object).where(numbers.notna(), text)
 
 
 def load_registry(path=REGISTRY_PATH) -> pd.DataFrame:
