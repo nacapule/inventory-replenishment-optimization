@@ -109,7 +109,7 @@ class WordingTests(unittest.TestCase):
 
     def test_report_states_how_bias_intervals_and_capacity_are_read(self):
         text = report.render("insight_report.md", report.insight_values(summary()))
-        self.assertIn("(of the difference in pounds if a resampled baseline cost is zero", text)
+        self.assertIn("(of the difference in pounds when the relative interval is undefined)", text)
         self.assertIn("bias is better the closer it is to zero", text)
         self.assertNotIn("Lower is better on each", text)
         self.assertIn("every scenario, except that the capacity sensitivities apply their own factor", text)

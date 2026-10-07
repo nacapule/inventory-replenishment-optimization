@@ -227,7 +227,7 @@
     "src/report.py": "a7b9581ea71731c01bbc44c917a406f1dbbb0e4fc12faa7a847e8924fed229e9",
     "src/replenishment.py": "02d144ff8110c152a717c8c79e56abfd7dfd5dfe6a7381a2547a78e36caeb647",
     "data/code_registry.csv": "a7d6e53ab41efd467b335b51966ef66210bb5f866880c1b22c407949e420bbd5",
-    "templates/insight_report.md": "124d9d681b4e2f91b2b7b2cfc172227e34501394aa9f5f78165d07cf5c325f6d",
+    "templates/insight_report.md": "87612764a4d3261a6e8b927d5ebb18f7d6e8c77b7859601c3a5c68f55367b4ea",
     "templates/data_quality.md": "53ba0003077d219dc56cf2e82595dc54e84a1780b40cee0445171c9598631331",
     "templates/readme_results.md": "3172c480bba553529bef416b5976cde52cc295864496e431cd40e549bd3eab0d",
     "configs/published.toml": "9ab40c3055fb79edef43ea09f37493f16178c9c3bb6d2ba49603a3f745a2f569"
@@ -310,8 +310,8 @@
       "bytes": 31301
     },
     "insight_report.md": {
-      "sha256": "e0f22b9b42d9fdc1f0e9f57ec8ca6213309f8c042a4541698f98d6db0c856f75",
-      "bytes": 15003
+      "sha256": "4680fe54ea3c789c013bd14494522ca5a2f7951e319c0ec36016cabc1d72361e",
+      "bytes": 14962
     },
     "data_quality.md": {
       "sha256": "211042f6c3d36ca0fcc4d819903e89cd163ebd0a114b15104c22f8e5251ce9ff",
