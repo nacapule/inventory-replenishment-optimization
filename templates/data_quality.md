@@ -52,7 +52,7 @@ A credit matches exactly when an earlier sale has the same known customer, stock
 - **not_negative**: a credit invoice line whose quantity is not negative.
 - **nonpositive_price**: a credit line whose price is not positive.
 
-**Re-invoiced** counts the later matches that are followed within $reversal_hours hours by an equal sale. Such a sale may repeat the credited order; where it does, those units count twice in sales, because the later credit stays in the ledger.
+**Re-invoiced** counts the later matches that are followed within $reversal_hours hours by an equal sale. Such a sale may repeat the credited order. When both sales count as sales, the order's units are counted twice, since the later credit stays in the ledger and is not netted.
 
 $credit_table
 

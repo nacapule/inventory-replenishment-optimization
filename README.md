@@ -50,7 +50,7 @@ Each row sets targets once from the training weeks and scores them over the hold
 
 Each Monday, every policy sets each product's start-of-week stock from the sales and prices recorded before that week. Replenishment arrives at once (zero lead time), sales beyond the units on hand are lost, and leftover units carry into the next week.
 
-**Capacity** is a hypothetical limit on total start-of-week stock, counted in units because the data has no product sizes. It is the selected products' mean weekly sales over the selection year (weeks with invoices only), rounded to a whole unit and the same for every policy (the unconstrained reference ignores it).
+**Capacity** is a hypothetical limit on total start-of-week stock, counted in units because the data has no product sizes. It is the selected products' mean weekly sales over the selection year (weeks with invoices only), rounded to a whole unit and shared by the four policies that respect it; the unconstrained reference ignores it.
 
 Modeled cost charges 5% of a product's price for each unit left over at the end of a week and 30% for each unit of sales not covered: for a £2.00 item, 10p and 60p. Both rates are assumptions. Only their ratio, the **critical ratio** 30 / (5 + 30) = 6/7, changes which stock levels are best; raising or lowering both rates together scales every policy's cost by the same factor.
 
@@ -81,7 +81,7 @@ The study combines both workbook sheets, keeps United Kingdom lines in complete 
 
 An example of a prompt reversal: invoice 541431 records a known customer buying 74,215 units of code 23166 at 10:01 on 18 January 2011, and credit C541433 reverses it in full sixteen minutes later. The first published design ignored credit lines, so this order stayed in its sales. A pair counts as sales until its credit is recorded; a decision uses only credits recorded before it.
 
-The bridge table in the results block starts from that first design and adds one correction per row. Removing prompt reversals lowers proportional allocation's cost and barely moves the optimizer's. Proportional allocation follows each product's mean weekly sales, which one huge week raises in proportion to its size; the newsvendor quantity and the optimizer rest on the share of history weeks with sales at or below each stock level, and one week, however large, counts as one week in that share. The [data report](exports/data_quality.md) reconciles every source row to its classification.
+In the bridge table, removing prompt reversals lowers proportional allocation's cost and barely moves the optimizer's. Proportional allocation follows each product's mean weekly sales, which one huge week raises in proportion to its size; the newsvendor quantity and the optimizer rest on the share of history weeks with sales at or below each stock level, and one week, however large, counts as one week in that share. The [data report](exports/data_quality.md) reconciles every source row to its classification.
 
 ## How the evaluation works
 
@@ -110,7 +110,7 @@ make verify    # rebuild in a temporary folder and compare every artifact byte f
 
 `make verify` also rechecks the reconciliation, the reversal pairs (each valid, no line used twice, none missed, each credit taking the most recent sale) and the cohort's weekly sales in SQLite, with `sql/reconciliation.sql`.
 
-For another scenario, copy and edit `configs/published.toml`, which holds every setting and is checked before the workbook is read, then write to another folder:
+For another scenario, copy and edit `configs/published.toml`, which holds every setting, then write to another folder:
 
 ~~~bash
 python src/replenishment.py analyze --config <copy> --output <folder>
@@ -120,11 +120,11 @@ python src/replenishment.py analyze --config <copy> --output <folder>
 
 `exports/` holds the results report `insight_report.md`, the data report `data_quality.md` (which also defines every CSV column), the figure, and:
 
-- `policy_comparison.csv`, `sku_decisions.csv` and `forecast_metrics.csv`, with names, columns and row grain kept for the companion dashboard; `sku_decisions.csv` holds next-week targets for every policy except the equal-price diagnostic;
+- `policy_comparison.csv`, `sku_decisions.csv` and `forecast_metrics.csv`, with names, columns and row grain kept for the companion dashboard;
 - `weekly_results.csv`, `weekly_sales.csv`, `sensitivity.csv`, `published_bridge.csv`, `reconciliation.csv` and `reversal_pairs.csv`;
 - `summary.json` (every number in the results block and the results report) and `run_manifest.json` (the configuration, input and source-file hashes, package versions and artifact hashes).
 
-`src/` holds the command line (`replenishment.py`) and four modules: `data.py` reads and classifies lines, `model.py` allocates and simulates stock, `experiment.py` runs the study and `report.py` writes the reports and exports; `sqlcheck.py` runs the SQLite checks.
+`src/` holds the command line (`replenishment.py`) and five modules: `data.py` reads and classifies lines, `model.py` allocates and simulates stock, `experiment.py` runs the study, `report.py` writes the reports and exports, and `sqlcheck.py` runs the SQLite checks.
 
 ## Source and related work
 
