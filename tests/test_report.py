@@ -115,8 +115,8 @@ class WordingTests(unittest.TestCase):
         self.assertIn("every scenario, except that the capacity sensitivities apply their own factor", text)
 
     def test_next_week_is_dated_and_called_the_partial_week_only_when_it_is(self):
-        cases = {52: ("2011-12-05", "5 December 2011, the first after the evaluation weeks and the workbook's "
-                                    "last, partial week, from"),
+        cases = {52: ("2011-12-05", "5 December 2011, the first after the evaluation weeks, which is also the "
+                                    "workbook's last, partial week, from"),
                  13: ("2011-03-07", "7 March 2011, the first after the evaluation weeks, from")}
         for weeks, (monday, text) in cases.items():
             current = summary(weeks)

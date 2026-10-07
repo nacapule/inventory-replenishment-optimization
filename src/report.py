@@ -484,7 +484,7 @@ def insight_values(summary: dict) -> dict:
         "bridge_min_active_weeks": settings["bridge_min_active_weeks"],
         "bridge_share": pct(settings["bridge_capacity_share"], 0),
         "decision_week": day(study["decision_week"]),
-        "decision_note": (" and the workbook's last, partial week"
+        "decision_note": (", which is also the workbook's last, partial week"
                           if study["decision_week"] in summary["data"]["partial_weeks"] else ""),
     }
 

@@ -224,7 +224,7 @@
     "src/data.py": "3625aae2487cd891e65ba9d4d67f986d77715113d3a2555190619e48540b6ba0",
     "src/model.py": "2e718f355fde33b2392f5c83a9ecc87d31bb5ad93d5d48b8a82fd1b74b30e702",
     "src/experiment.py": "e26a0fdb73785e4c26cf40b1267059afe1a1cec5dc7a60a2be29df34d2782ca0",
-    "src/report.py": "a7b9581ea71731c01bbc44c917a406f1dbbb0e4fc12faa7a847e8924fed229e9",
+    "src/report.py": "d41ba08c6217328167352c285eeaef777bd2b55ee64b2e6ec988b748eb954fca",
     "src/replenishment.py": "02d144ff8110c152a717c8c79e56abfd7dfd5dfe6a7381a2547a78e36caeb647",
     "data/code_registry.csv": "a7d6e53ab41efd467b335b51966ef66210bb5f866880c1b22c407949e420bbd5",
     "templates/insight_report.md": "87612764a4d3261a6e8b927d5ebb18f7d6e8c77b7859601c3a5c68f55367b4ea",
@@ -310,8 +310,8 @@
       "bytes": 31301
     },
     "insight_report.md": {
-      "sha256": "4680fe54ea3c789c013bd14494522ca5a2f7951e319c0ec36016cabc1d72361e",
-      "bytes": 14962
+      "sha256": "ab608ecd8679fb86f8d11f69f50713292fce67876eebe706387f74d5498d7e3b",
+      "bytes": 14973
     },
     "data_quality.md": {
       "sha256": "211042f6c3d36ca0fcc4d819903e89cd163ebd0a114b15104c22f8e5251ce9ff",

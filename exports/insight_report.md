@@ -145,4 +145,4 @@ The largest single week for a cohort product, relative to its typical selling we
 
 ## Next week
 
-`sku_decisions.csv` lists the stock each policy would set for the week starting 5 December 2011, the first after the evaluation weeks and the workbook's last, partial week, from the complete weeks among the trailing 52 weeks before it, with nothing carried in.
+`sku_decisions.csv` lists the stock each policy would set for the week starting 5 December 2011, the first after the evaluation weeks, which is also the workbook's last, partial week, from the complete weeks among the trailing 52 weeks before it, with nothing carried in.
