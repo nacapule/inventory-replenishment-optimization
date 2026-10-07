@@ -1,6 +1,6 @@
 # Inventory replenishment under a capacity limit: results
 
-The study compares five ways of setting start-of-week stock for 20 products under a shared limit, replanned every week and scored by modeled holding and shortage cost over 52 weeks. The **marginal optimizer** minimizes that cost over the history it is fitted to; the **scaled critical-fractile** and **proportional** rules are simple baselines; an equal-price optimizer and an unconstrained newsvendor serve as a diagnostic and a reference (all defined under Policies). A difference is **clear** when its 95% bootstrap interval excludes zero (see Results and uncertainty).
+The study compares four ways of setting start-of-week stock for 20 products under a shared limit, and one reference without it, replanned every week and scored by modeled holding and shortage cost over 52 weeks. The **marginal optimizer** minimizes that cost over the history it is fitted to. Two simple baselines: the **scaled critical-fractile** rule takes each product's cost-balancing stock level and scales the levels down to fit, and **proportional** allocation shares the limit in proportion to each product's recent mean weekly sales. An equal-price optimizer is a diagnostic and the unconstrained newsvendor a reference (all defined under Policies). A difference is **clear** when its 95% bootstrap interval excludes zero (see Results and uncertainty).
 
 **Sales** means United Kingdom invoiced merchandise units after removing orders that the same known customer reversed with an equal credit within 24 hours (prompt reversals). These sales stand in for the demand that stock could have met. The data report, [data_quality.md](data_quality.md), explains how every source row was classified.
 
@@ -14,9 +14,9 @@ The evaluation follows 20 products for 52 complete weeks, from 6 December 2010 t
 
 The **cohort**, the fixed set of products, is the 20 highest-revenue products of the selection year (7 December 2009 to 5 December 2010) among those sold in at least 26 of its 52 complete weeks. Selection uses only information known when evaluation begins.
 
-**Capacity** is a hypothetical limit of 6,455 units on total start-of-week stock, counted in units because the data has no product sizes. It is the cohort's mean weekly sales (6,455.3 units) over the 51 selection weeks with invoices, rounded to a whole unit. The cohort and the limit are fixed before evaluation and shared by every policy and scenario, except that capacity sensitivities apply their own factor to the same mean.
+**Capacity** is a hypothetical limit of 6,455 units on total start-of-week stock, counted in units because the data has no product sizes. It is the cohort's mean weekly sales (6,455.3 units) over the 51 selection weeks with invoices, rounded to a whole unit. The cohort and the limit are fixed before evaluation and the same for every policy and scenario, except that capacity sensitivities apply their own factor to the same mean; the unconstrained reference ignores the limit.
 
-Each decision draws on a **history window** of past weeks (trailing 52 weeks), leaving out weeks without any invoice. Each product's price is its median unit price over the 52 weeks before the decision, used both to allocate stock and to score that week. The sales scored in a week include only the reversal credits recorded by its end, so a credit learned later never rewinds simulated stock.
+Each decision draws on a **history window** of past weeks (trailing 52 weeks), leaving out weeks without any invoice. Each product's price is its median unit price over the 52 weeks before the decision, used both to allocate stock and to score that week. The sales scored in a week reflect only the reversal credits recorded by its end, so a credit learned later never rewinds simulated stock.
 
 ## Cost model
 
@@ -27,7 +27,7 @@ The marginal optimizer chooses stock for all products together:
     minimize    Σᵢ priceᵢ · ( h · E[(xᵢ − Dᵢ)⁺] + p · E[(Dᵢ − xᵢ)⁺] )
     subject to  Σᵢ xᵢ ≤ C,   xᵢ ≥ carriedᵢ,   xᵢ whole units
 
-For product i, xᵢ is start-of-week stock, carriedᵢ the stock carried in, priceᵢ its price and Dᵢ one week's sales. C is the capacity; h and p are the rates above. (z)⁺ means the larger of z and zero, and E averages over the weeks of the history window, each counting equally. Each product's expected cost is convex in its stock, so each added unit lowers cost less than the one before. Giving each next unit to the product where it lowers cost most, until no unit helps or the limit is reached, therefore reaches the minimum for that history. "Optimal" refers to this fitted objective, not to the weeks that follow.
+For product i, xᵢ is start-of-week stock, carriedᵢ the stock carried in, priceᵢ its price and Dᵢ one week's sales. C is the capacity; h and p are the rates above. (z)⁺ means the larger of z and zero, and E averages over the weeks of the history window, each counting equally. Each product's expected cost is convex in its stock, so each added unit lowers cost by no more than the one before. Giving each next unit to the product where it lowers cost most, until no unit helps or the limit is reached, therefore reaches the minimum for that history. "Optimal" refers to this fitted objective, not to the weeks that follow.
 
 ## Policies
 
@@ -62,7 +62,7 @@ Each comparison subtracts the baseline's total modeled cost from the optimizer's
 | Optimizer vs scaled critical-fractile | £81,045 | £77,909 | £3,135 | +4.0% | +0.6% to +8.3% | 2-week blocks: +1.1% to +7.9%; 8-week blocks: −0.5% to +8.6% | 20 / 32 |
 | Optimizer vs proportional to recent mean | £81,045 | £82,095 | −£1,051 | −1.3% | −4.9% to +3.3% | 2-week blocks: −4.4% to +2.6%; 8-week blocks: −6.5% to +4.2% | 27 / 25 |
 
-Uncertainty comes from a **paired moving-block bootstrap**: both policies' weekly costs are resampled together in blocks of 4 consecutive weeks, 10,000 times, and the table reports the 95% percentile interval of the relative difference. It falls back to the difference in pounds only when the relative interval is undefined. The interval checks repeat the calculation with other block lengths. A difference is called **clear** only when its interval excludes zero.
+Uncertainty comes from a **paired moving-block bootstrap**: both policies' weekly costs are resampled together in blocks of 4 consecutive weeks, 10,000 times, and the table reports the 95% percentile interval of the relative difference. When the relative interval is undefined (a baseline cost of zero), the table shows n/a and the verdict uses the interval of the difference in pounds. The interval checks repeat the calculation with other block lengths. A difference is called **clear** only when its interval excludes zero.
 
 ## By quarter
 
@@ -104,7 +104,7 @@ Products are sorted by the first cost-difference column, largest first.
 
 ## Sensitivities
 
-Each row changes one factor of the primary configuration: the capacity, the critical ratio, how the history is built, or what counts as a sale. The original-cleaning row switches off all three data corrections together (reversal removal, the code registry and upper-case matching); the capped-history row caps each invoice's quantity of a product, in the history only, at the percentile its label names, computed over the history window and rounded up. The cohort and the limit stay fixed, except that capacity rows apply their own factor to the same mean weekly sales. All rows were declared before any result was computed, except the one whose label says otherwise.
+Each row changes one factor of the primary configuration: the capacity, the critical ratio, how the history is built, or what counts as a sale. The original-cleaning row switches off all three data corrections together (reversal removal, the code registry and upper-case matching); the all-matched-credits row removes the sale behind every exactly matched credit, not only those within 24 hours, each from the moment the credit is recorded; the capped-history row caps each invoice's quantity of a product, in the history only, at the percentile its label names, computed over the history window and rounded up. The cohort and the limit stay fixed, except that capacity rows apply their own factor to the same mean weekly sales. All rows were declared before any result was computed, except the one whose label says otherwise.
 
 Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, not clearly different in 10 and never clearly higher.
 
@@ -153,7 +153,7 @@ Each window's mean is the proportional rule's estimate of next week's sales; its
 
 ## Largest week
 
-The largest spike in a cohort product's weekly sales, relative to its median selling week, and whether a credit matches its largest line:
+Whether the largest remaining spike in a cohort product's weekly sales comes from a credited order:
 
 The largest single week for a cohort product, relative to its typical selling week, was 9,679 units of 84347 (ROTATING SILVER ANGELS T-LIGHT HLDR) in the week of 1 November 2010, 277 times its median selling week of 35 units. Its largest line was invoice 530715 (9,360 units, a known customer). No credit matches that line under the exact-matching rule.
 

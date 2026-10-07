@@ -105,7 +105,7 @@ A credit matches exactly when an earlier sale has the same known customer, stock
 - **not_negative**: a credit invoice line whose quantity is not negative.
 - **nonpositive_price**: a credit line whose price is not positive.
 
-**Re-invoiced** counts the later matches followed within 24 hours by an equal sale. If such a sale repeats the credited order, both sales stay in the series, so the re-invoiced units are the most that could be counted twice.
+**Re-invoiced** counts the later matches that are followed within 24 hours by an equal sale. Such a sale may repeat the credited order; where it does, those units count twice in sales, because the later credit stays in the ledger.
 
 | Status | Lag | Credits | Units | Value | Re-invoiced | Re-invoiced units |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |

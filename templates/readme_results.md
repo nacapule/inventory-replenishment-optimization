@@ -10,6 +10,6 @@ $sensitivity_sentence The [results report](exports/insight_report.md) has the qu
 
 **From the first published design, one correction at a time.** $bridge_sentence
 
-$bridge_table
+Each row sets targets once from the training weeks and scores them over the holdout weeks that follow, as the first published design did. The scaled critical-fractile column was not part of that design; it is computed at every step for reference.
 
-Each row scores targets set once for a single holdout period, as the first published design did. The scaled critical-fractile column was not part of that design; it is computed at every step for reference.
+$bridge_table
