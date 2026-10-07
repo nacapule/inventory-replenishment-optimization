@@ -1,0 +1,100 @@
+# The published run: the primary configuration and its sensitivities, declared before
+# any result was computed. To try another scenario, copy this file, change it and run
+#   python src/replenishment.py analyze --config <your copy> --output <folder>
+
+[input]
+sha256 = "bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980"
+bytes = 45622278
+country = "United Kingdom"
+reversal_window_hours = 24     # a credit this soon after an equal sale reverses it
+
+[cohort]
+skus = 20                      # products in the study
+min_active_weeks = 26          # sold in at least this many selection weeks
+selection_weeks = 52           # complete weeks that choose the products and the capacity
+evaluation_weeks = 52          # complete weeks re-planned and scored, after the selection weeks
+
+[comparison]
+policy = "optimizer"
+baselines = ["scaled_fractile", "proportional"]
+
+[primary]
+id = "primary"
+label = "Primary configuration"
+holding_rate = 0.05            # of the unit price, per unit left over at the end of a week
+shortage_rate = 0.30           # of the unit price, per unit of sales not covered
+capacity_factor = 1.0          # capacity = round(factor x the cohort's mean weekly sales)
+window = "trailing_52"         # trailing_52, trailing_13 or seasonal_analog
+closure_weeks = "drop"         # weeks with no invoices: "drop" from history or keep as "zero"
+data = { reversals = "prompt", registry = true, normalize_case = true }
+
+[bootstrap]
+block_weeks = 4
+check_block_weeks = [2, 8]
+resamples = 10000
+seed = 20261006
+confidence = 0.95
+
+[[sensitivity]]
+id = "capacity_0.75"
+label = "Capacity factor 0.75"
+capacity_factor = 0.75
+
+[[sensitivity]]
+id = "capacity_1.25"
+label = "Capacity factor 1.25"
+capacity_factor = 1.25
+
+[[sensitivity]]
+id = "ratio_0.75"
+label = "Critical ratio 0.75"
+critical_ratio = 0.75          # holding rate kept, shortage rate adjusted
+
+[[sensitivity]]
+id = "ratio_0.95"
+label = "Critical ratio 0.95"
+critical_ratio = 0.95
+
+[[sensitivity]]
+id = "ratio_0.98"
+label = "Critical ratio 0.98"
+critical_ratio = 0.98
+
+[[sensitivity]]
+id = "trailing_13"
+label = "History: trailing 13 weeks"
+window = "trailing_13"
+
+[[sensitivity]]
+id = "seasonal_analog"
+label = "History: same 13 weeks a year earlier"
+window = "seasonal_analog"
+
+[[sensitivity]]
+id = "originally_cleaned"
+label = "Data as originally cleaned"
+data = { reversals = "none", registry = false, normalize_case = false }
+
+[[sensitivity]]
+id = "all_exact_credits"
+label = "All exactly matched credits removed as known"
+data = { reversals = "all_exact" }
+
+[[sensitivity]]
+id = "bulk_cap"
+label = "History capped at each SKU's 99th-percentile order (added after an exploratory result favored it)"
+bulk_cap_quantile = 0.99
+
+[[sensitivity]]
+id = "closure_weeks_kept"
+label = "Closure weeks kept as zero-sales history"
+closure_weeks = "zero"
+
+[bridge]
+sheet = "Year 2010-2011"
+skus = 20
+min_active_weeks = 20
+holdout_weeks = 12
+capacity_share = 0.85
+steps = ["original", "prompt_reversals", "code_registry", "case_normalization", "complete_weeks",
+         "training_prices", "inverse_ecdf_capacity"]
