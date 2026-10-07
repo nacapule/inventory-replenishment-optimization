@@ -36,17 +36,53 @@ def raw():
 class ConfigTests(unittest.TestCase):
     def test_published_configuration_declares_one_change_per_sensitivity(self):
         config = experiment.load_config(PUBLISHED)
-        self.assertEqual(len(config.sensitivities), 11)
-        self.assertEqual((config.primary.holding_rate, config.primary.shortage_rate), (Fraction(1, 20), Fraction(3, 10)))
+        primary = experiment.Scenario("primary", "Primary configuration", data.DataRules("prompt", True, True),
+                                      "trailing_52", "drop", Fraction(1), Fraction(1, 20), Fraction(3, 10), None)
+        self.assertEqual(config.primary, primary)
         self.assertEqual(config.primary.critical_ratio, Fraction(6, 7))
-        settings = ("rules", "window", "closures", "capacity_factor", "holding_rate", "shortage_rate", "bulk_cap")
+        changes = {
+            "capacity_0.75": {"capacity_factor": Fraction(3, 4)},
+            "capacity_1.25": {"capacity_factor": Fraction(5, 4)},
+            "ratio_0.75": {"shortage_rate": Fraction(3, 20)},
+            "ratio_0.95": {"shortage_rate": Fraction(19, 20)},
+            "ratio_0.98": {"shortage_rate": Fraction(49, 20)},
+            "trailing_13": {"window": "trailing_13"},
+            "seasonal_analog": {"window": "seasonal_analog"},
+            "originally_cleaned": {"rules": data.DataRules("none", False, False)},
+            "all_exact_credits": {"rules": data.DataRules("all_exact", True, True)},
+            "bulk_cap": {"bulk_cap": Fraction(99, 100)},
+            "closure_weeks_kept": {"closures": "zero"},
+        }
+        self.assertEqual([scenario.id for scenario in config.sensitivities], list(changes))
         for scenario in config.sensitivities:
-            changed = [name for name in settings if getattr(scenario, name) != getattr(config.primary, name)]
-            self.assertEqual(len(changed), 1, scenario.id)
-        ratios = {s.id: (s.critical_ratio, s.holding_rate, s.shortage_rate) for s in config.sensitivities}
-        self.assertEqual(ratios["ratio_0.95"], (Fraction(19, 20), Fraction(1, 20), Fraction(19, 20)))
-        self.assertEqual(ratios["ratio_0.98"][0], Fraction(49, 50))
-        self.assertEqual(ratios["ratio_0.75"][2], Fraction(3, 20))
+            with self.subTest(scenario.id):
+                expected = replace(primary, id=scenario.id, label=scenario.label, **changes[scenario.id])
+                self.assertEqual(scenario, expected)
+        ratios = {s.id: s.critical_ratio for s in config.sensitivities}
+        self.assertEqual([ratios["ratio_0.75"], ratios["ratio_0.95"], ratios["ratio_0.98"]],
+                         [Fraction(3, 4), Fraction(19, 20), Fraction(49, 50)])
+
+    def rejected_in_primary(self, key, value) -> str:
+        config = raw()
+        config["primary"][key] = value
+        with self.assertRaises(experiment.ConfigError) as caught:
+            experiment.parse_config(config)
+        return str(caught.exception)
+
+    def test_primary_cannot_change_the_data_rules(self):
+        message = self.rejected_in_primary("data", {"reversals": "all_exact"})
+        self.assertIn("[primary] cannot set data", message)
+        self.assertIn("[[sensitivity]]", message)
+
+    def test_primary_cannot_change_closure_weeks(self):
+        message = self.rejected_in_primary("closure_weeks", "zero")
+        self.assertIn("[primary] cannot set closure_weeks", message)
+        self.assertIn("[[sensitivity]]", message)
+
+    def test_primary_cannot_cap_bulk_orders(self):
+        message = self.rejected_in_primary("bulk_cap_quantile", 0.99)
+        self.assertIn("[primary] cannot set bulk_cap_quantile", message)
+        self.assertIn("[[sensitivity]]", message)
 
     def test_invalid_values_are_rejected(self):
         cases = [
@@ -55,7 +91,7 @@ class ConfigTests(unittest.TestCase):
             ("primary", "holding_rate", -0.05), ("primary", "shortage_rate", math.nan),
             ("primary", "holding_rate", math.inf), ("primary", "capacity_factor", -1.0),
             ("primary", "capacity_factor", math.nan), ("primary", "capacity_factor", "1"),
-            ("primary", "window", "trailing_8"), ("primary", "closure_weeks", "skip"),
+            ("primary", "window", "trailing_8"),
             ("primary", "shortage_rate", -0.3), ("comparison", "baselines", ["scaled", "proportional"]),
             ("comparison", "baselines", ["optimizer"]), ("comparison", "baselines", "proportional"),
             ("comparison", "baselines", []), ("bootstrap", "resamples", 0), ("bootstrap", "confidence", 1.0),
@@ -84,6 +120,7 @@ class ConfigTests(unittest.TestCase):
             lambda c: c["sensitivity"][0].update(critical_ratio=0),
             lambda c: c["sensitivity"][1].update(data={"reversals": "some"}),
             lambda c: c["sensitivity"][1].update(data={"registry": "yes"}),
+            lambda c: c["sensitivity"][1].update(closure_weeks="skip"),
             lambda c: c["sensitivity"][2].update(bulk_cap_quantile=0),
             lambda c: c["sensitivity"][2].update(bulk_cap_quantile=1.1),
             lambda c: c["comparison"].update(policy="proportional"),

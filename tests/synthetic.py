@@ -51,8 +51,6 @@ holding_rate = 0.05
 shortage_rate = 0.30
 capacity_factor = 1.0
 window = "trailing_52"
-closure_weeks = "drop"
-data = { reversals = "prompt", registry = true, normalize_case = true }
 
 [bootstrap]
 block_weeks = 4

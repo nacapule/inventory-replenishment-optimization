@@ -110,7 +110,7 @@ make verify    # rebuild in a temporary folder and compare every artifact byte f
 
 `make verify` also rechecks the reconciliation, the reversal pairs (each valid, no line used twice, none missed, each credit taking the most recent sale) and the cohort's weekly sales in SQLite, with `sql/reconciliation.sql`.
 
-For another scenario, copy and edit `configs/published.toml`, which holds every setting, then write to another folder:
+For another scenario, copy and edit `configs/published.toml`, which holds every setting (the data treatment changes only in sensitivity rows), then write to another folder:
 
 ~~~bash
 python src/replenishment.py analyze --config <copy> --output <folder>

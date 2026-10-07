@@ -135,14 +135,25 @@ def _choice(value, options, name) -> str:
 
 SCENARIO_KEYS = ("id", "label", "data", "window", "closure_weeks", "capacity_factor", "holding_rate",
                  "shortage_rate", "critical_ratio", "bulk_cap_quantile")
+TREATMENT_KEYS = ("data", "closure_weeks", "bulk_cap_quantile")  # changed only by sensitivities
 
 
 def _scenario(table, base: Scenario | None) -> Scenario:
-    required = ("id", "label") + (() if base else ("data", "window", "closure_weeks", "capacity_factor",
-                                                    "holding_rate", "shortage_rate"))
+    """The primary scenario (no base), or a sensitivity, which keeps every primary setting it
+    does not change.
+
+    The primary always uses the primary data treatment: `data.PRIMARY_RULES`, closure weeks
+    dropped from history and no bulk cap. The SQL check and the reports' description of the
+    data assume it.
+    """
+    required = ("id", "label") + (() if base else ("window", "capacity_factor", "holding_rate", "shortage_rate"))
     _keys(table, SCENARIO_KEYS, "a scenario", required)
+    fixed = [key for key in TREATMENT_KEYS if key in table]
+    if base is None and fixed:
+        raise ConfigError(f"[primary] cannot set {', '.join(fixed)}: the primary data treatment is fixed "
+                          "(see data/README.md), and only a [[sensitivity]] row changes it")
     name = f"scenario {table['id']!r}"
-    rules = dict(vars(base.rules)) if base else {}
+    rules = dict(vars(base.rules if base else data.PRIMARY_RULES))
     rules.update(_keys(table.get("data", {}), ("reversals", "registry", "normalize_case"), f"{name} data"))
     try:
         rules = data.DataRules(**rules)
@@ -155,17 +166,19 @@ def _scenario(table, base: Scenario | None) -> Scenario:
         shortage = holding * ratio / (1 - ratio)
     if holding == 0 and shortage == 0:
         raise ConfigError(f"{name}: holding_rate and shortage_rate cannot both be zero")
-    cap = table.get("bulk_cap_quantile")
-    if cap is not None and _exact(cap, f"{name} bulk_cap_quantile", positive=True) > 1:
-        raise ConfigError(f"{name}: bulk_cap_quantile must be at most 1")
+    cap = base.bulk_cap if base else None
+    if "bulk_cap_quantile" in table:
+        cap = _exact(table["bulk_cap_quantile"], f"{name} bulk_cap_quantile", positive=True)
+        if cap > 1:
+            raise ConfigError(f"{name}: bulk_cap_quantile must be at most 1")
     return Scenario(
         id=str(table["id"]), label=str(table["label"]), rules=rules,
         window=_choice(table.get("window", base and base.window), WINDOWS, f"{name} window"),
-        closures=_choice(table.get("closure_weeks", base and base.closures), CLOSURES, f"{name} closure_weeks"),
+        closures=_choice(table.get("closure_weeks", base.closures if base else "drop"), CLOSURES,
+                         f"{name} closure_weeks"),
         capacity_factor=(_exact(table["capacity_factor"], f"{name} capacity_factor")
                          if "capacity_factor" in table else base.capacity_factor),
-        holding_rate=holding, shortage_rate=shortage,
-        bulk_cap=None if cap is None else _exact(cap, f"{name} bulk_cap_quantile", positive=True),
+        holding_rate=holding, shortage_rate=shortage, bulk_cap=cap,
     )
 
 

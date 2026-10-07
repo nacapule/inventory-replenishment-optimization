@@ -24,8 +24,7 @@ holding_rate = 0.05            # of the unit price, per unit left over at the en
 shortage_rate = 0.30           # of the unit price, per unit of sales not covered
 capacity_factor = 1.0          # capacity = round(factor x the cohort's mean weekly sales)
 window = "trailing_52"         # trailing_52, trailing_13 or seasonal_analog
-closure_weeks = "drop"         # weeks with no invoices: "drop" from history or keep as "zero"
-data = { reversals = "prompt", registry = true, normalize_case = true }
+# The primary data treatment is fixed (see data/README.md); the sensitivities below vary it.
 
 [bootstrap]
 block_weeks = 4
