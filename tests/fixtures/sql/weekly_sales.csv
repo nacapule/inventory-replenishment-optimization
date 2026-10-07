@@ -1,0 +1,9 @@
+week_start,period,closure,sku,units,units_at_week_close,revenue
+2011-03-07,selection,False,85123A,0,24,0.0
+2011-03-07,selection,False,22423,4,4,51.0
+2011-03-14,selection,False,85123A,16,16,40.8
+2011-03-14,selection,False,22423,3,3,38.25
+2011-03-21,evaluation,False,85123A,5,5,13.950000000000001
+2011-03-21,evaluation,False,22423,0,0,0.0
+2011-03-28,evaluation,True,85123A,0,0,0.0
+2011-03-28,evaluation,True,22423,0,0,0.0

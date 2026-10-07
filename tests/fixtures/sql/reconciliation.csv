@@ -1,0 +1,14 @@
+sheet,role,rows,units,value
+Year 2009-2010,overlap,1,12,30.599999999999998
+Year 2009-2010,prompt_reversal_sale,1,1,12.75
+Year 2009-2010,merchandise_sale,2,8,40.8
+Year 2010-2011,accounting_invoice,1,1,-11062.06
+Year 2010-2011,invalid,1,0,0.0
+Year 2010-2011,prompt_reversal_credit,10,-69,-344.4
+Year 2010-2011,ledger_credit,4,-21,-104.55
+Year 2010-2011,stock_adjustment,1,-10,0.0
+Year 2010-2011,zero_price,1,5,0.0
+Year 2010-2011,prompt_reversal_sale,9,68,331.65
+Year 2010-2011,non_merchandise,1,2,36.0
+Year 2010-2011,quarantined,1,1,2.0
+Year 2010-2011,merchandise_sale,8,39,150.05

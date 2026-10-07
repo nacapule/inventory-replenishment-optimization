@@ -1,0 +1,11 @@
+sku,customer_id,price,units,code_class,sale_sheet,sale_row,sale_invoice,sale_time,sale_country,credit_sheet,credit_row,credit_invoice,credit_time,credit_country,lag_minutes,prompt
+22423,13085,12.75,1,merchandise,Year 2009-2010,5,489436,2011-03-06 20:00:00,United Kingdom,Year 2010-2011,4,C540003,2011-03-07 08:00:00,United Kingdom,720.0,True
+85123A,17850,2.55,12,merchandise,Year 2010-2011,2,540001,2011-03-07 09:00:00,United Kingdom,Year 2010-2011,3,C540002,2011-03-07 09:30:00,United Kingdom,30.0,True
+22423,13047,12.75,4,merchandise,Year 2010-2011,6,540005,2011-03-08 12:00:00,United Kingdom,Year 2010-2011,7,C540006,2011-03-08 14:00:00,United Kingdom,120.0,True
+85123A,14911,2.55,6,merchandise,Year 2010-2011,8,540007,2011-03-09 11:00:00,United Kingdom,Year 2010-2011,11,C540008,2011-03-09 11:20:00,United Kingdom,20.0,True
+85123A,14911,2.55,6,merchandise,Year 2010-2011,9,540007,2011-03-09 11:00:00,United Kingdom,Year 2010-2011,10,C540008,2011-03-09 11:20:00,United Kingdom,20.0,True
+22423,12583,12.75,2,merchandise,Year 2010-2011,12,540009,2011-03-10 10:00:00,United Kingdom,Year 2010-2011,13,C540010,2011-03-10 10:10:00,United Kingdom,10.0,True
+85123A,17850,2.55,24,merchandise,Year 2010-2011,15,540011,2011-03-13 22:00:00,United Kingdom,Year 2010-2011,16,C540012,2011-03-14 08:00:00,United Kingdom,600.0,True
+85123A,14911,2.55,5,merchandise,Year 2010-2011,19,540015,2011-03-16 09:00:00,United Kingdom,Year 2010-2011,20,C540016,2011-03-17 09:00:00,United Kingdom,1440.0,True
+POST,12345,18.0,1,charge,Year 2010-2011,27,540023,2011-03-22 10:00:00,France,Year 2010-2011,28,C540024,2011-03-22 10:30:00,France,30.0,True
+22423,12345,12.75,8,merchandise,Year 2010-2011,25,540021,2011-03-22 10:00:00,France,Year 2010-2011,26,C540022,2011-03-22 11:00:00,France,60.0,True

@@ -29,6 +29,7 @@ readme:
 # Rebuild in a temporary folder and compare with the committed exports.
 verify: $(DATA_FILE)
 	$(CLI) verify --config $(CONFIG) --input $(DATA_FILE) --output $(EXPORTS)
+	$(PYTHON) src/sqlcheck.py --config $(CONFIG) --input $(DATA_FILE) --output $(EXPORTS)
 
 all: test analyze readme
 
