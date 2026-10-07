@@ -81,10 +81,12 @@ class CommandLineTests(unittest.TestCase):
         record = json.loads(original)
         record["artifacts"]["summary.json"]["sha256"] = "0" * 64
         del record["sources"]["src/experiment.py"]
+        record["sources"]["src/obsolete.py"] = None
         manifest.write_text(json.dumps(record), encoding="utf-8")
         code, _, err = run("verify", "--config", self.config, "--input", self.workbook, "--output", exports)
         self.assertEqual(code, 1)
         self.assertIn("src/experiment.py differs from the file the manifest records", err)
+        self.assertIn("src/obsolete.py differs from the file the manifest records", err)
         self.assertIn("summary.json is missing or does not match the manifest", err)
         manifest.write_text(original, encoding="utf-8")
         with open(exports / "weekly_sales.csv", "a", encoding="utf-8") as handle:
@@ -141,7 +143,25 @@ class MakefileTests(unittest.TestCase):
         commands = self.dry_run("clean")
         self.assertIn("exports.staging", commands)
         for line in commands.splitlines():
-            self.assertNotRegex(line, r"exports/|exports\s|\*\.csv|\*\.md|\*\.svg|\*\.json")
+            if line.startswith("rm"):
+                self.assertNotRegex(line, r"exports/|exports\s|exports$|\*\.csv|\*\.md|\*\.svg|\*\.json")
+
+    def test_clean_puts_back_a_bundle_left_by_an_interrupted_publish(self):
+        for current in (False, True):
+            with tempfile.TemporaryDirectory() as name, self.subTest(exports_present=current):
+                folder = Path(name)
+                shutil.copy(ROOT / "Makefile", folder)
+                for path in ("src", "tests", "exports.staging", "exports.previous"):
+                    (folder / path).mkdir()
+                (folder / "exports.previous" / "summary.json").write_text("backup\n")
+                if current:
+                    (folder / "exports").mkdir()
+                    (folder / "exports" / "summary.json").write_text("current\n")
+                subprocess.run(["make", "clean"], cwd=folder, capture_output=True, check=True)
+                self.assertEqual(sorted(path.name for path in folder.iterdir()),
+                                 ["Makefile", "exports", "src", "tests"])
+                self.assertEqual((folder / "exports" / "summary.json").read_text(),
+                                 "current\n" if current else "backup\n")
 
     def test_targets_run_the_published_configuration(self):
         self.assertIn("src/replenishment.py analyze --config configs/published.toml", self.dry_run("analyze"))

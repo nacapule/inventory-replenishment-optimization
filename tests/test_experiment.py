@@ -10,6 +10,7 @@ from dataclasses import replace
 from fractions import Fraction
 from pathlib import Path
 from statistics import median
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -398,6 +399,13 @@ class BridgeTests(unittest.TestCase):
         self.assertNotIn("DOT", cohorts[-1])
         self.assertTrue(np.allclose(bridge["optimizer_vs_proportional"],
                                     bridge["optimizer_cost"] / bridge["proportional_cost"] - 1))
+
+    def test_each_distinct_data_treatment_is_built_once(self):
+        with mock.patch("data.SalesPanel", wraps=data.SalesPanel) as panel:
+            experiment.published_bridge(synthetic.config(), synthetic.source())
+        rules = [call.args[1] for call in panel.call_args_list]
+        self.assertEqual(len(rules), 4)  # seven steps, four of which change the data treatment
+        self.assertEqual(len(set(rules)), 4)
 
 
 @unittest.skipUnless(WORKBOOK.exists(), "the Online Retail II workbook is not in data/raw")

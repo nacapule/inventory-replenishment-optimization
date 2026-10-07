@@ -43,7 +43,7 @@ Fill rate is the share of recorded sales units that the stock covered. It is not
 
 $comparison_table
 
-The intervals come from a paired moving-block bootstrap over weeks: blocks of $block_weeks consecutive weeks of both policies' costs, resampled $resamples times, with the $confidence percentile interval of the relative difference. The interval checks repeat it with other block lengths. A difference is called clear only when the interval excludes zero.
+The intervals come from a paired moving-block bootstrap over weeks: blocks of $block_weeks consecutive weeks of both policies' costs, resampled $resamples times, with the $confidence percentile interval of the relative difference (of the difference in pounds if a resampled baseline cost is zero, where the relative difference is undefined). The interval checks repeat it with other block lengths. A difference is called clear only when the interval excludes zero.
 
 ## By quarter
 

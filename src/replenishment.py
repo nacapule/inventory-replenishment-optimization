@@ -57,9 +57,9 @@ def verify(config_path, input_path, output) -> list[str]:
     config = experiment.load_config(config_path)
     recorded = json.loads((output / report.MANIFEST).read_text(encoding="utf-8"))
     problems = []
-    current = report.source_hashes(Path(config_path))
+    current, absent = report.source_hashes(Path(config_path)), object()
     for name in sorted(set(current) | set(recorded["sources"])):
-        if current.get(name) != recorded["sources"].get(name):
+        if current.get(name, absent) != recorded["sources"].get(name, absent):
             problems.append(f"{name} differs from the file the manifest records")
     try:
         report.check_bundle(output)

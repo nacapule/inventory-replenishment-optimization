@@ -107,8 +107,9 @@ class WordingTests(unittest.TestCase):
             report.write_cost_difference_figure(report.weekly_cost(synthetic.result(13).primary), NAMES, path)
             self.assertIn("(13 weeks)", path.read_text(encoding="utf-8"))
 
-    def test_report_ranks_bias_by_distance_from_zero_and_names_the_capacity_exceptions(self):
+    def test_report_states_how_bias_intervals_and_capacity_are_read(self):
         text = report.render("insight_report.md", report.insight_values(summary()))
+        self.assertIn("(of the difference in pounds if a resampled baseline cost is zero", text)
         self.assertIn("bias is better the closer it is to zero", text)
         self.assertNotIn("Lower is better on each", text)
         self.assertIn("every scenario, except that the capacity sensitivities apply their own factor", text)
@@ -227,6 +228,16 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(record["calendar"]["closure_weeks"], ["2009-12-28", "2010-12-27"])
         self.assertEqual(record["calendar"]["partial_weeks"], ["2009-11-30", "2011-12-05"])
         self.assertFalse({"time", "created", "commit", "date"} & set(record))
+
+    def test_check_bundle_requires_the_manifest_to_list_exactly_the_artifacts(self):
+        folder = self.write("bundle")
+        report.check_bundle(folder)
+        manifest = folder / report.MANIFEST
+        record = json.loads(manifest.read_text(encoding="utf-8"))
+        record["artifacts"]["extra.csv"] = {"sha256": "0" * 64}
+        manifest.write_text(json.dumps(record), encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "exactly the published artifacts"):
+            report.check_bundle(folder)
 
     def test_failed_run_leaves_the_previous_bundle(self):
         output = self.folder / "exports"

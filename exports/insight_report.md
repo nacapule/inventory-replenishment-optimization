@@ -52,7 +52,7 @@ Fill rate is the share of recorded sales units that the stock covered. It is not
 | Optimizer vs scaled critical-fractile | £81,045 | £77,909 | £3,135 | +4.0% | +0.6% to +8.3% | 2-week blocks: +1.1% to +7.9%; 8-week blocks: −0.5% to +8.6% | 20 / 32 |
 | Optimizer vs proportional to recent mean | £81,045 | £82,095 | −£1,051 | −1.3% | −4.9% to +3.3% | 2-week blocks: −4.4% to +2.6%; 8-week blocks: −6.5% to +4.2% | 27 / 25 |
 
-The intervals come from a paired moving-block bootstrap over weeks: blocks of 4 consecutive weeks of both policies' costs, resampled 10,000 times, with the 95% percentile interval of the relative difference. The interval checks repeat it with other block lengths. A difference is called clear only when the interval excludes zero.
+The intervals come from a paired moving-block bootstrap over weeks: blocks of 4 consecutive weeks of both policies' costs, resampled 10,000 times, with the 95% percentile interval of the relative difference (of the difference in pounds if a resampled baseline cost is zero, where the relative difference is undefined). The interval checks repeat it with other block lengths. A difference is called clear only when the interval excludes zero.
 
 ## By quarter
 

@@ -32,7 +32,9 @@ verify: $(DATA_FILE)
 
 all: test analyze readme
 
-# Temporary files only; the committed exports are never removed.
+# Temporary files only; the committed exports are never removed, and a bundle left in
+# $(EXPORTS).previous by an interrupted publish is moved back first.
 clean:
+	if [ -d $(EXPORTS).previous ] && [ ! -e $(EXPORTS) ]; then mv $(EXPORTS).previous $(EXPORTS); fi
 	rm -rf $(EXPORTS).staging $(EXPORTS).previous
 	find src tests -name __pycache__ -type d -prune -exec rm -rf {} +
