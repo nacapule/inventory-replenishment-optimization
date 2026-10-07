@@ -1,10 +1,15 @@
 PYTHON ?= python3
+CONFIG ?= configs/published.toml
 DATA_URL := https://archive.ics.uci.edu/static/public/502/online%2Bretail%2Bii.zip
 DATA_FILE := data/raw/online_retail_II.xlsx
+EXPORTS := exports
+CLI := $(PYTHON) src/replenishment.py
 
-.PHONY: data test analyze all clean
+.PHONY: data test analyze readme verify all clean
 
+# Download the workbook if it is missing, then check its size and SHA-256.
 data: $(DATA_FILE)
+	$(CLI) check --config $(CONFIG) --input $(DATA_FILE)
 
 $(DATA_FILE):
 	mkdir -p data/raw
@@ -16,10 +21,18 @@ test:
 	$(PYTHON) -m unittest discover -s tests
 
 analyze: $(DATA_FILE)
-	$(PYTHON) src/replenishment.py analyze --input $(DATA_FILE) --output exports
+	$(CLI) analyze --config $(CONFIG) --input $(DATA_FILE) --output $(EXPORTS)
 
-all: test analyze
+readme:
+	$(CLI) readme --output $(EXPORTS)
 
+# Rebuild in a temporary folder and compare with the committed exports.
+verify: $(DATA_FILE)
+	$(CLI) verify --config $(CONFIG) --input $(DATA_FILE) --output $(EXPORTS)
+
+all: test analyze readme
+
+# Temporary files only; the committed exports are never removed.
 clean:
-	rm -f exports/*.csv exports/*.md exports/*.svg exports/*.db
-
+	rm -rf $(EXPORTS).staging $(EXPORTS).previous
+	find src tests -name __pycache__ -type d -prune -exec rm -rf {} +

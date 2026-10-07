@@ -3,5 +3,5 @@
 __pycache__/
 *.pyc
 data/raw/
-exports/*.db
-
+/exports.staging/
+/exports.previous/
