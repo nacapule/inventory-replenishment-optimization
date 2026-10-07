@@ -2,7 +2,18 @@
 
 ## Source rows
 
-The workbook's sheets contain Year 2009-2010: 525,461, Year 2010-2011: 541,910, for 1,067,371 rows in all. The older sheet contains a copy of the newer sheet's first 22,523 rows. After confirming that the copy is identical, it is set aside, leaving 1,044,848 rows to classify. Every source row receives exactly one role, including the overlap, so the reconciliation sums to the workbook.
+The workbook has two sheets (Year 2009-2010: 525,461, Year 2010-2011: 541,910), 1,067,371 rows in all. The older sheet ends with a copy of the newer sheet's first 22,523 rows; after the copy is confirmed identical it is set aside, leaving 1,044,848 rows to classify. Every source row, the copy included, receives exactly one role, so the table below sums to the workbook. The roles (a role with no rows does not appear in the table):
+
+- **overlap**: the older sheet's copy of rows also held in the newer sheet.
+- **accounting_invoice**: invoices numbered with an A (accounting entries).
+- **invalid**: a missing or malformed required field, or a quantity that is not a whole, non-zero number.
+- **prompt_reversal_sale / prompt_reversal_credit**: a sale and its equal credit within 24 hours, with the same known customer, stock code, price and quantity; the credit must be strictly later.
+- **ledger_credit**: other credit lines, kept in a ledger and never netted against sales.
+- **stock_adjustment**: negative quantities on invoices that are not credits; their value in this workbook is zero.
+- **zero_price**: positive lines priced at zero.
+- **non_merchandise**: charges, accounting codes, test codes and vouchers excluded by `data/code_registry.csv`.
+- **quarantined**: manual entries whose item cannot be identified, listed in the registry.
+- **merchandise_sale**: the remaining positive, priced merchandise lines.
 
 | Sheet | Role | Rows | Units | Value |
 | --- | --- | ---: | ---: | ---: |
@@ -26,22 +37,11 @@ The workbook's sheets contain Year 2009-2010: 525,461, Year 2010-2011: 541,910, 
 | Year 2010-2011 | quarantined | 299 | 7,151 | £64,627.18 |
 | Year 2010-2011 | merchandise_sale | 527,121 | 5,397,384 | £9,979,530.42 |
 
-- **overlap**: the older sheet's copy of rows also held in the newer sheet.
-- **accounting_invoice**: invoices beginning with A, used for bad-debt adjustments.
-- **invalid**: a missing or malformed required field, or a quantity that is not a whole, non-zero number.
-- **prompt_reversal_sale / prompt_reversal_credit**: a sale and its equal credit within 24 hours, with the same known customer, stock code, price and quantity; the credit must be strictly later.
-- **ledger_credit**: other credit lines, retained in a ledger and never netted against sales.
-- **stock_adjustment**: negative quantities without a credit invoice, at zero price.
-- **zero_price**: positive lines priced at zero.
-- **non_merchandise**: charges, accounting codes, test codes and vouchers excluded by `data/code_registry.csv`.
-- **quarantined**: unidentified manual entries listed in the registry.
-- **merchandise_sale**: the remaining positive, priced merchandise lines.
-
-Study **sales** means United Kingdom invoiced merchandise units after removing prompt reversals. These sales stand in for the demand that stock could have met. Removal takes effect when the credit is recorded, as explained below.
+Study **sales** means United Kingdom merchandise units after removing prompt reversals. These sales stand in for the demand that stock could have met. A removal takes effect when the credit is recorded, as explained below. A **SKU** is a product, identified by its stock code.
 
 ## The cohort
 
-The **cohort** is the fixed set of 20 products selected by revenue in the selection year, 7 December 2009 to 5 December 2010. Products qualify if sold in at least 26 of that year's weeks. Selection uses only information known when evaluation begins. The cohort and capacity then stay fixed through evaluation.
+The **cohort** is the fixed set of 20 products with the highest revenue in the selection year (7 December 2009 to 5 December 2010) among those sold in at least 26 of that year's weeks. Selection uses only information known when evaluation begins. The cohort and the storage limit (capacity, defined in the results report) then stay fixed through evaluation.
 
 | SKU | Description | Weeks sold | Units | Revenue |
 | --- | --- | ---: | ---: | ---: |
@@ -68,7 +68,7 @@ The **cohort** is the fixed set of 20 products selected by revenue in the select
 
 ## From accepted lines to the study (United Kingdom)
 
-The stages show which lines enter sales. **Accepted** lines are positive, priced, non-credit lines under the original counting rule. **Merchandise** excludes registry codes and A invoices. The next stages remove prompt reversals, then partial weeks at the workbook's ends. The **study cohort** retains the selected 20 products over the selection and evaluation years.
+The stages show which lines enter sales. **Accepted** lines are those a plain count of sales would take: positive quantity, positive price, not a credit invoice. **Merchandise** drops the registry codes and A invoices. The next stages remove prompt reversals, then the partial weeks at both ends of the data. The **study cohort** keeps the 20 selected products over the selection and evaluation years.
 
 | Stage | Lines | Units | Value |
 | --- | ---: | ---: | ---: |
@@ -80,9 +80,9 @@ The stages show which lines enter sales. **Accepted** lines are positive, priced
 
 ## Orders reversed within 24 hours
 
-United Kingdom: 1,075 sale lines totaling 210,153 units have equal credits within the reversal window; 1,347 such pairs occur across all countries. Of the United Kingdom pairs, 63 involve cohort products, totaling 4,084 units.
+1,075 United Kingdom sale lines, totaling 210,153 units, have an equal credit within the reversal window; across all countries there are 1,347 such pairs. Of the United Kingdom pairs, 63 involve cohort products, totaling 4,084 units.
 
-A pair counts as sales until its credit is recorded and is removed from then on. A decision therefore uses only credits recorded before it. The largest pairs are:
+A pair counts as sales until its credit is recorded and is removed from then on, so a decision uses only credits recorded before it. The largest pairs:
 
 | SKU | Units | Sale | Credit | Sale time | Minutes later |
 | --- | ---: | --- | --- | --- | ---: |
@@ -92,11 +92,20 @@ A pair counts as sales until its credit is recorded and is removed from then on.
 | 47587A | 1,200 | 508333 | C508334 | 2010-05-14 12:00 | 4 |
 | 71477 | 1,152 | 529350 | C529352 | 2010-10-28 09:29 | 3 |
 
-`reversal_pairs.csv` identifies every pair, including each line's sheet and spreadsheet row.
+`reversal_pairs.csv` lists every pair, with each line's sheet and spreadsheet row.
 
 ## Credit lines (United Kingdom)
 
-An exact match requires an earlier sale with the same known customer, stock code, price and quantity. Each credit takes the latest unused matching sale; a sale can be matched only once. Matches later than 24 hours remain in the ledger.
+A credit matches exactly when an earlier sale has the same known customer, stock code, price and quantity. Each credit takes the latest unused matching sale, so a sale is matched at most once. The statuses in the table:
+
+- **prompt_reversal**: matched within 24 hours; the pair leaves sales.
+- **later_exact_match**: matched, but more than 24 hours after the sale; it stays in the ledger.
+- **no_earlier_equal_sale**: no unused earlier sale matches.
+- **missing_customer**: the credit has no customer ID, so it cannot be matched.
+- **not_negative**: a credit invoice line whose quantity is not negative.
+- **nonpositive_price**: a credit line whose price is not positive.
+
+**Re-invoiced** counts the later matches followed within 24 hours by an equal sale. If such a sale repeats the credited order, both sales stay in the series, so the re-invoiced units are the most that could be counted twice.
 
 | Status | Lag | Credits | Units | Value | Re-invoiced | Re-invoiced units |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -109,11 +118,9 @@ An exact match requires an earlier sale with the same known customer, stock code
 | later_exact_match | over 28 days | 1,505 | 26,638 | £61,248.18 | 55 | 3,361 |
 | not_negative | unmatched | 1 | −1 | −£373.57 | 0 | 0 |
 
-**Re-invoiced** counts later credits followed within 24 hours by an equal sale. That sale may repeat the credited one, so the reported re-invoiced units bound how many units may be counted twice in sales.
-
 ## Codes that are not merchandise (United Kingdom)
 
-The registry records each listed code's class and action. Excluded and quarantined codes both stay out of merchandise sales.
+The registry gives each listed code a class and an action. Excluded and quarantined codes both stay out of merchandise sales; the action only records why.
 
 | Code | Class | Action | Lines | Units | Value | Description |
 | --- | --- | --- | ---: | ---: | ---: | --- |
@@ -141,7 +148,7 @@ The registry records each listed code's class and action. Excluded and quarantin
 
 ## Retained codes that are not digits plus a letter suffix (United Kingdom)
 
-These codes remain classified as merchandise.
+These codes are neither digits with an optional letter suffix nor listed in the registry, so they remain merchandise. They are listed so a reader can check that none is a charge or an adjustment.
 
 | Code | Lines | Units | Description |
 | --- | ---: | ---: | --- |
@@ -165,7 +172,7 @@ These codes remain classified as merchandise.
 
 ## Cohort codes written more than one way
 
-Stock codes are matched after trimming surrounding spaces and converting to upper case. Suffixes are retained.
+Stock codes are matched after trimming surrounding spaces and converting to upper case. Suffixes are kept.
 
 | SKU | Written as | Lines | Units |
 | --- | --- | ---: | ---: |
@@ -208,7 +215,7 @@ Descriptions are display labels; they are never used to match products.
 
 ## Concentration of the cohort's sales
 
-These shares cover the selection and evaluation years and use all sales units as the denominator. **Anonymous** lines have no customer ID. **Top customer** and **top invoice** are the largest single customer's and invoice's shares.
+These shares cover the selection and evaluation years and are shares of all sales units. **Anonymous** lines have no customer ID. **Top customer** and **top invoice** are the largest single customer's and the largest single invoice's shares. High shares flag products whose sales depend on a few buyers or orders.
 
 | SKU | Units | Customers | Anonymous | Top customer | Top invoice |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -235,11 +242,11 @@ These shares cover the selection and evaluation years and use all sales units as
 
 ## Calendar
 
-Weeks run Monday to Sunday. Complete weeks span 7 December 2009 to 4 December 2011; partial weeks at both ends are excluded. Weeks with no invoice in any country: the week of 28 December 2009, the week of 27 December 2010. They are omitted from history samples and scored as weeks with no sales. Selection starts on 7 December 2009; evaluation runs from 6 December 2010 to 4 December 2011.
+Weeks run Monday to Sunday. The complete weeks run from 7 December 2009 to 4 December 2011; the partial weeks at both ends are left out. Weeks with no invoice in any country: the week of 28 December 2009, the week of 27 December 2010. Such a week is left out of history samples and scored as a week with no sales. Selection starts on 7 December 2009; evaluation runs from 6 December 2010 to 4 December 2011.
 
 ## Repeated lines
 
-Identical source rows are retained as recorded.
+Identical source rows are kept as recorded: nothing in the workbook tells a duplicated row from a genuine repeat line.
 
 | Sheet | Rows | Repeated rows | Units on repeated rows |
 | --- | ---: | ---: | ---: |
@@ -257,7 +264,7 @@ One row per policy, summarizing the primary configuration's evaluation weeks.
 | `policy` | Policy display name |
 | `allocated_units` | Mean total start-of-week stock, units |
 | `fill_rate` | Share of recorded sales units covered by stock |
-| `stockout_rate` | Share of simulated product-weeks with some recorded sales not covered |
+| `stockout_rate` | Share of simulated product-weeks with some recorded sales not covered (SKU-weeks short in the results report) |
 | `holding_cost` | Total modeled holding cost, £ |
 | `shortage_cost` | Total modeled shortage cost, £ |
 | `total_cost` | Total holding plus shortage cost, £ |
@@ -270,7 +277,7 @@ One row per policy, summarizing the primary configuration's evaluation weeks.
 
 ### `sku_decisions.csv`
 
-One row per cohort product, with each policy's targets for the week after evaluation (`decision_week`). Targets start with nothing carried in and use complete weeks with invoices in the primary history window before the decision.
+One row per cohort product, with the targets of every policy except the equal-price diagnostic for the week after evaluation (`decision_week`). Targets start with nothing carried in and use complete weeks with invoices in the primary history window before the decision.
 
 | Column | Meaning |
 | --- | --- |
@@ -294,7 +301,7 @@ One row per cohort product, with each policy's targets for the week after evalua
 
 ### `forecast_metrics.csv`
 
-One row per history window, scored over evaluation. The mean supplies the point estimate; the critical-ratio quantile supplies the pinball-loss estimate.
+One row per history window, scored over the evaluation weeks. The window's mean is the point estimate; its quantile at the critical ratio, `shortage_rate / (holding_rate + shortage_rate)`, is scored by pinball loss.
 
 | Column | Meaning |
 | --- | --- |

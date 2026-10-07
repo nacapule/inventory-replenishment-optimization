@@ -1,10 +1,14 @@
 # Inventory Replenishment Under a Capacity Limit
 
-How should a retailer split fixed start-of-week stock space across its best-selling products, replanning weekly for a year? This study compares a cost-minimizing allocator with simple rules. A rule that scales product stock targets to fit the limit led under the primary settings. The optimizer's earlier advantage came from counting a reversed sale; it led over the year under some alternative settings.
+How should a retailer split a fixed amount of stock space across its top products when it replans every week? This project compares a cost-minimizing allocator, the **marginal optimizer**, with two simple rules on an online retailer's invoice lines from December 2009 to December 2011. **Proportional** allocation shares the space by each product's recent mean weekly sales; the **scaled critical-fractile** rule takes each product's cost-balancing stock level (its newsvendor quantity) and scales the levels down to fit.
 
-**Sales** means United Kingdom invoiced merchandise units after removing orders the same customer reversed with an equal credit within 24 hours. These sales stand in for the demand that stock could have met. **Fill rate** is the share of recorded sales units simulated stock covered. It is not a service level: sales the retailer could not make were never recorded.
+Over a year of weekly decisions, the scaled critical-fractile rule had the lowest modeled cost within the limit. The optimizer cost clearly more than it and showed no clear difference from proportional allocation; it cost clearly less than the scaled rule only with the highest shortage penalty tested or a 13-week history. The advantage this project first published came from the data, not the method: orders reversed by an equal credit soon after they were placed had been counted as sales.
+
+**Sales** are United Kingdom invoiced merchandise units after removing orders that the same known customer reversed with an equal credit within 24 hours (a **prompt reversal**); they stand in for the demand that stock could have met. **Modeled cost** is the holding and shortage charge described under The decision being modeled. **Fill rate** is the share of recorded sales units that simulated stock covered; it is not a service level, because sales the retailer could not make were never recorded. A cost difference is **clear** when its 95% bootstrap interval excludes zero.
 
 ## What the evidence shows
+
+Generated from `exports/summary.json` by `make readme`.
 
 <!-- results:start -->
 Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal optimizer's modeled cost was 4.0% higher than the scaled critical-fractile rule's (95% interval 0.6% to 8.3% higher; it cost less in 20 of the 52 weeks and more in 32). Against proportional allocation, there was no clear difference: 1.3% lower in total (95% interval from 4.9% lower to 3.3% higher; it cost less in 27 of the 52 weeks and more in 25). The lowest modeled cost within the limit was the scaled critical-fractile rule's (£77,909); the unconstrained newsvendor, which ignores the limit, came to £76,403.
@@ -19,9 +23,11 @@ Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal o
 
 ![Cumulative weekly difference in modeled cost between the marginal optimizer and each baseline](exports/cost_difference.svg)
 
-Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, clearly higher in 0 and not clearly different in 10. See the [results report](exports/insight_report.md) for quarter, product and sensitivity tables.
+The figure adds up, week by week, the marginal optimizer's modeled cost minus each baseline's; below zero, the optimizer had cost less so far.
 
-**From the published figure to this one.** Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's.
+Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, clearly higher in 0 and not clearly different in 10. The [results report](exports/insight_report.md) has the quarter, product and sensitivity tables.
+
+**From the first published design, one correction at a time.** Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's.
 
 | Step | Training / holdout weeks | Capacity | Marginal optimizer | Scaled critical-fractile | Proportional | Optimizer vs proportional |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -32,107 +38,94 @@ Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly l
 | Complete weeks only | 40 / 12 | 7,689 | £24,188 | £23,881 | £23,330 | 3.7% higher |
 | Prices from the training weeks only | 40 / 12 | 7,689 | £24,188 | £23,881 | £23,330 | 3.7% higher |
 | Capacity from the smallest optimal quantities | 40 / 12 | 7,689 | £24,188 | £23,881 | £23,330 | 3.7% higher |
+
+Each row scores targets set once for a single holdout period, as the first published design did. The scaled critical-fractile column was not part of that design; it is computed at every step for reference.
 <!-- results:end -->
 
-- **The original advantage came from the data.** Removing prompt reversals erased the optimizer's advantage over the proportional rule in the original design. See the [bridge table](exports/insight_report.md#from-the-published-design) and the Data section below.
-- **A simple rule led over the year.** The scaled rule had the lowest modeled cost within the limit. The optimizer cost clearly more by the predeclared rule: its interval calculated with 4-week blocks excludes zero. The 2-week check agrees, while the 8-week check includes zero. Its difference from the proportional rule was not clear. Most of the optimizer's cost gap against the scaled rule arose in the [last evaluation quarter](exports/insight_report.md#by-quarter), when all policies cost more than in other quarters. The ranking held with the original cleaning too.
-- **The ranking depended on the settings.** At the highest tested uncovered-sales penalty, the optimizer cost clearly less than both baselines; at the next-highest, it led within the limit but its intervals included zero. With 13 weeks of history, both optimizers cost less than the scaled rule, clearly so for the price-weighted one; the equal-price version led. Under primary settings, equal prices cost less than price weighting, but more than the scaled rule. No interval was computed between the optimizers. See [sensitivities](exports/insight_report.md#sensitivities).
+- **The first published advantage came from the data.** That design counted prompt reversals as sales. Removing them (second row of the last table) ended the optimizer's advantage over proportional allocation by lowering proportional allocation's cost; the optimizer's barely changed.
+- **A simple rule had the lowest cost over the year.** The marginal optimizer, optimal for the history it is fitted to each week, cost clearly more than the scaled rule, most of the gap arising in the [last quarter](exports/insight_report.md#by-quarter), when every policy's cost was higher. The ranking was the same with the data cleaned as in the first published design.
+- **The ranking depends on the settings.** At the highest critical ratio tested, the optimizer cost clearly less than both baselines; with only 13 weeks of history, both optimizers cost less than the scaled rule, clearly so for the marginal optimizer. Under the primary settings, the equal-price optimizer cost less than the marginal optimizer (no interval was computed for that pair) but more than the scaled rule. See the [sensitivities](exports/insight_report.md#sensitivities).
 
 ## The decision being modeled
 
-Each Monday, policies set start-of-week stock from sales and prices recorded before that week. Replenishment arrives immediately, with zero lead time. Stock covers sales up to the units on hand; the rest are lost in the simulation. Leftovers carry forward and incur holding cost. Evaluation starts empty.
+Each Monday, every policy sets each product's start-of-week stock from the sales and prices recorded before that week. Replenishment arrives at once (zero lead time), sales beyond the units on hand are lost, and leftover units carry into the next week. The first evaluation week starts empty.
 
-Capacity limits total start-of-week stock in units, because product sizes are absent. This hypothetical limit is the selected products' mean weekly sales over selection weeks with invoices, rounded to a whole unit and fixed for every policy.
+**Capacity** is a hypothetical limit on total start-of-week stock, counted in units because the data has no product sizes. It is the selected products' mean weekly sales over the selection year (weeks with invoices only), rounded to a whole unit and the same for every policy.
 
-Holding a leftover unit for a week costs 5% of price; an uncovered sales unit costs 30%. For a £2.00 item, the charges are 10p and 60p. Both rates are assumptions. Only their **critical ratio**, 30 / (5 + 30) = 6/7, changes preferred stock levels for the history; scaling both rates together scales every policy's cost alike.
+Modeled cost charges 5% of a product's price for each unit left over at the end of a week and 30% for each unit of sales not covered: for a £2.00 item, 10p and 60p. Both rates are assumptions. Only their ratio changes which stock levels are best, the **critical ratio** 30 / (5 + 30) = 6/7; their level scales every policy's cost alike.
 
-The optimizer solves:
+The marginal optimizer solves:
 
     minimize    Σᵢ priceᵢ · ( h · E[(xᵢ − Dᵢ)⁺] + p · E[(Dᵢ − xᵢ)⁺] )
     subject to  Σᵢ xᵢ ≤ C,   xᵢ ≥ carriedᵢ,   xᵢ whole units
 
-For product i, xᵢ is start-of-week stock, carriedᵢ is stock carried in, priceᵢ is its price, and Dᵢ is one week's sales. C is capacity; h and p are the holding and shortage rates. The positive-part symbol ⁺ means the larger of the bracketed value and zero. E averages equally over history weeks. Each product's expected cost is convex: successive units offer diminishing reductions. Assigning units where they reduce cost most, until none helps or capacity is full, minimizes cost for that history.
+Here xᵢ is product i's start-of-week stock, carriedᵢ its carried-in stock, priceᵢ its price and Dᵢ one week's sales; C is the capacity, h and p the two rates, (z)⁺ the larger of z and zero, and E the average over the weeks of the history window. Each product's expected cost is convex in its stock, so giving units one at a time to the product whose next unit lowers cost most reaches the minimum, hence "marginal". "Optimal" means optimal for the fitted history, not for the weeks that follow.
 
 ## Policies
 
-A **newsvendor quantity**, or **critical fractile**, is the smallest stock level at which the history's share of weeks with sales at or below it reaches the critical ratio.
+A product's **newsvendor quantity** (its **critical fractile**) is the smallest stock level at which the share of history weeks with sales at or below it reaches the critical ratio.
 
 | Policy | Rule |
 | --- | --- |
-| Proportional to recent mean | Shares the limit in proportion to each product's mean weekly sales. |
-| Scaled critical-fractile | Scales newsvendor quantities down to the limit when their total exceeds it. |
+| Proportional to recent mean | Shares the limit in proportion to each product's mean weekly sales over the history window. |
+| Scaled critical-fractile | Takes each product's newsvendor quantity and scales them all down to the limit when their total exceeds it. |
 | Marginal optimizer | Solves the problem above, starting from carried stock. |
-| Marginal optimizer, equal prices | Allocates with every price set to one, then scores at real prices to show what price weighting contributes. |
-| Unconstrained newsvendor | Uses each product's newsvendor quantity without a shared limit; a reference only. |
+| Marginal optimizer, equal prices | The same allocation with every price set to one, scored at real prices: a diagnostic of what price weighting contributes. |
+| Unconstrained newsvendor | Each product's newsvendor quantity with no limit: a reference only. |
 
-The target rules top up carried stock. If targets do not fit beside it, free space is shared in proportion to each product's shortfall. Stock is never thrown away.
+The two rules set a target per product and order the gap above carried stock; when the gaps exceed the free space, it is shared in proportion to the gaps. No policy discards stock.
 
 ## Data
 
-The study combines both workbook sheets, covering December 2009 to December 2011, and uses United Kingdom lines and complete Monday-to-Sunday weeks. The [code registry](data/code_registry.csv) excludes charges, accounting codes, test codes, vouchers and manual entries. Codes are matched in upper case. Credits outside prompt reversals stay in a ledger, never netted against sales.
+The study combines both workbook sheets, keeps United Kingdom lines in complete Monday-to-Sunday weeks, and matches stock codes in upper case. A [code registry](data/code_registry.csv) excludes charges, accounting codes, test codes, vouchers and manual entries. Credits other than prompt reversals stay in a ledger and are never netted against sales.
 
-For example, invoice 541431 records customer 12346 buying 74,215 units of code 23166 at £1.04 at 10:01 on 18 January 2011. Credit C541433 reverses it exactly at 10:17, sixteen minutes later. The original design dropped credits, keeping this order in sales. A prompt reversal requires the same known customer, code, price and quantity. The pair counts as sales until its credit is recorded; a decision uses only credits recorded before it.
+An example of a prompt reversal: invoice 541431 records a known customer buying 74,215 units of code 23166 at 10:01 on 18 January 2011, and credit C541433 reverses it in full sixteen minutes later. The first published design ignored credit lines, so this order stayed in its sales. A pair counts as sales until its credit is recorded; a decision uses only credits recorded before it.
 
-The table **“From the published figure to this one”** starts with the first published design: one sheet, a single 12-week holdout and fixed targets. The first row reproduces its result; each later row adds one correction. Removing reversed sales in the second row erases the optimizer's advantage because proportional allocation's cost falls most. A mean is pulled up by a very large week; a quantile at the critical ratio barely moves. The [data report](exports/data_quality.md) gives the full classification.
+The last table in the results block starts from that first design (the 2010–2011 sheet alone, a single 12-week holdout, targets set once) and adds one correction per row. Removing prompt reversals lowers proportional allocation's cost and barely moves the optimizer's. Proportional allocation follows each product's mean weekly sales, which one huge week raises in proportion to its size; the newsvendor quantity and the optimizer use the share of weeks below each stock level, which one week can change by only one week's worth. The [data report](exports/data_quality.md) reconciles every source row to its classification.
 
 ## How the evaluation works
 
-The first 52 complete weeks select the 20 highest-revenue products sold in at least 26 selection weeks and set capacity. The next 52 evaluate weekly decisions. Primary history is the trailing 52 complete weeks; weeks with no invoice anywhere are omitted from history and scored with no sales.
+The first 52 complete weeks are the **selection year**: they pick the 20 highest-revenue products among those sold in at least 26 of those weeks and set the capacity. The next 52 are the **evaluation year**, replanned each Monday and scored. Each decision uses a **history window**, by default the trailing 52 complete weeks; weeks with no invoice anywhere are left out of it and scored as weeks without sales. A product's price is its median over the 52 weeks before the decision. The sales scored in a week include only the credits recorded by its end.
 
-Prices are each product's median unit price over the preceding 52 weeks, used to allocate and score the week. Evaluation sales reflect credits known at week-end; later credits never rewind stock.
-
-Total modeled costs are compared with a paired moving-block bootstrap: both policies' weekly costs are resampled together in consecutive 4-week blocks, 10,000 times. A difference is clear only when its 95% interval excludes zero. The primary configuration and eleven one-at-a-time sensitivities were predeclared, except the row labeled as added after an exploratory result favored it.
+Differences in total modeled cost are judged with a paired moving-block bootstrap: both policies' weekly costs are resampled together in 4-week blocks, 10,000 times. Blocks of 2 and 8 weeks serve as checks; for the optimizer against the scaled rule, the 8-week interval includes zero. The primary configuration and eleven sensitivities, each changing one factor, were declared before any result was computed, except one whose label says it was added after an exploratory result favored it; all are in [`configs/published.toml`](configs/published.toml).
 
 ## What real use would need
 
-Real use needs on-hand stock, supplier lead times, procurement cost and margins, case packs or minimum orders, and capacity in volume or shelf space. With lead time, orders cover sales until the next delivery and stock on order matters, so decisions depend on supplier behavior absent from this data.
+Real use would need on-hand stock, supplier lead times, procurement costs and margins, case packs or minimum orders, and capacity in volume or shelf space. With a lead time, each order must cover sales until the next delivery and stock on order matters, so decisions would depend on supplier behavior this data does not record.
 
 ## Reproduce or change a scenario
 
-Use Python 3.14 and `requirements.txt`'s exact package versions:
+Use Python 3.14 with the exact versions in `requirements.txt`:
 
 ~~~bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-make data
-make test
-make analyze
-make readme
-make verify
+make data      # download the workbook and check its size and SHA-256
+make test      # unit tests; those that need the workbook skip without it
+make analyze   # rebuild exports/, replaced only once the new bundle is complete
+make readme    # refresh the results block from exports/summary.json
+make verify    # rebuild in a temporary folder and compare every artifact byte for byte
 ~~~
 
-`make data` downloads the UCI archive, unzips the workbook into `data/raw/`, and checks its size and SHA-256 against `configs/published.toml`. `make test` runs unit tests; workbook-dependent tests are skipped without it. `make analyze` replaces `exports/` only when the new bundle is complete. `make readme` updates the results block from `exports/summary.json`. `make verify` rebuilds in a temporary folder, compares every artifact byte for byte, and checks the manifest's input and source hashes.
-
-For another scenario, copy and edit `configs/published.toml`; use another output folder to preserve published exports:
+For another scenario, copy and edit `configs/published.toml`, which holds every setting and is checked before the workbook is read, then write to another folder:
 
 ~~~bash
 python src/replenishment.py analyze --config <copy> --output <folder>
 ~~~
 
-Configuration is checked before reading the workbook. There are no separate scenario-setting flags.
-
 ## Outputs
 
-In `exports/`:
+`exports/` holds the results report `insight_report.md`, the data report `data_quality.md` (which also defines every CSV column), the figure, and:
 
-- `insight_report.md`: results and method.
-- `data_quality.md`: data classification and every exported CSV column's meaning.
-- `cost_difference.svg`: cumulative modeled cost differences.
-- `policy_comparison.csv`, `sku_decisions.csv`, `forecast_metrics.csv`: policy, product and forecast tables with names, columns and row grain kept for the companion dashboard. `sku_decisions.csv` targets the week after evaluation.
-- `weekly_results.csv`: every policy, product and evaluation week.
-- `sensitivity.csv`: scenario comparisons.
-- `published_bridge.csv`: the bridge from the first published design.
-- `reconciliation.csv`: source-row roles, summing to the workbook.
-- `reversal_pairs.csv`: matched prompt reversals.
-- `weekly_sales.csv`: cohort sales by week.
-- `summary.json`: every number quoted by the reports and README block.
-- `run_manifest.json`: configuration, input and source-file hashes, package versions and artifact hashes.
+- `policy_comparison.csv`, `sku_decisions.csv` and `forecast_metrics.csv`, with names, columns and row grain kept for the companion dashboard; `sku_decisions.csv` holds next-week targets for every policy except the equal-price diagnostic;
+- `weekly_results.csv`, `weekly_sales.csv`, `sensitivity.csv`, `published_bridge.csv`, `reconciliation.csv` and `reversal_pairs.csv`;
+- `summary.json`, every number in the results block and the results report, and `run_manifest.json`, the configuration, input and source-file hashes, package versions and artifact hashes.
 
-`configs/published.toml` holds the study settings; `data/code_registry.csv` classifies codes; `templates/` holds report wording. In `src/`, `data.py` reads and classifies lines, `model.py` allocates and simulates stock, `experiment.py` runs the study, `report.py` produces reports and exports, and `replenishment.py` provides the command line.
+`src/` holds the command line (`replenishment.py`) and four modules: `data.py` reads and classifies lines, `model.py` allocates and simulates stock, `experiment.py` runs the study and `report.py` writes the reports and exports.
 
 ## Source and related work
 
 Daqing Chen (2012), *Online Retail II*, UCI Machine Learning Repository. [DOI 10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D), CC BY 4.0. Code: [MIT License](LICENSE).
 
-The companion [retail-sales-dashboard](https://github.com/nacapule/retail-sales-dashboard) reports on the same retailer: a DuckDB star schema and Power BI report whose fulfillment page uses this project's policy, product and forecast tables.
+The companion [retail-sales-dashboard](https://github.com/nacapule/retail-sales-dashboard) reports on the same retailer's data: a DuckDB star schema and a Power BI report whose fulfillment page uses this project's policy, product and forecast tables.

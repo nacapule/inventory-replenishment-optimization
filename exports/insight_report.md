@@ -1,6 +1,8 @@
 # Inventory replenishment under a capacity limit: results
 
-The study compares weekly stock-allocation rules. **Sales** means United Kingdom invoiced merchandise units after removing orders the same known customer reversed with an equal credit within 24 hours. These sales stand in for the demand that stock could have met. [data_quality.md](data_quality.md) explains the source-row classification.
+The study compares five ways of setting start-of-week stock for 20 products under a shared limit, replanned every week and scored by modeled holding and shortage cost over 52 weeks. The **marginal optimizer** minimizes that cost over the history it is fitted to; the **scaled critical-fractile** and **proportional** rules are simple baselines; an equal-price optimizer and an unconstrained newsvendor serve as a diagnostic and a reference (all defined under Policies). A difference is **clear** when its 95% bootstrap interval excludes zero (see Results and uncertainty).
+
+**Sales** means United Kingdom invoiced merchandise units after removing orders that the same known customer reversed with an equal credit within 24 hours (prompt reversals). These sales stand in for the demand that stock could have met. The data report, [data_quality.md](data_quality.md), explains how every source row was classified.
 
 Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal optimizer's modeled cost was 4.0% higher than the scaled critical-fractile rule's (95% interval 0.6% to 8.3% higher; it cost less in 20 of the 52 weeks and more in 32). Against proportional allocation, there was no clear difference: 1.3% lower in total (95% interval from 4.9% lower to 3.3% higher; it cost less in 27 of the 52 weeks and more in 25). The lowest modeled cost within the limit was the scaled critical-fractile rule's (£77,909); the unconstrained newsvendor, which ignores the limit, came to £76,403.
 
@@ -8,42 +10,42 @@ Over the 52 evaluation weeks, 6 December 2010 to 4 December 2011, the marginal o
 
 ## Study and weekly timeline
 
-The evaluation follows 20 products for 52 complete weeks, from 6 December 2010 to 4 December 2011. Every Monday, each policy sets start-of-week stock using only sales and prices recorded before that week. Replenishment arrives immediately, with zero lead time. Stock covers the week's sales up to the units on hand; the rest are lost in the simulation. Leftovers carry into the next week. The first evaluation week starts empty.
+The evaluation follows 20 products for 52 complete weeks, from 6 December 2010 to 4 December 2011. Every Monday, each policy sets start-of-week stock using only sales and prices recorded before that week. Replenishment arrives at once (zero lead time). Stock covers the week's sales up to the units on hand; the rest are lost. Leftover units carry into the next week. The first evaluation week starts empty.
 
-The **cohort**, the fixed set of products, comprises the 20 highest-revenue products in the selection year (7 December 2009 to 5 December 2010) among those sold in at least 26 of its 52 complete weeks. Selection uses only information known when evaluation begins.
+The **cohort**, the fixed set of products, is the 20 highest-revenue products of the selection year (7 December 2009 to 5 December 2010) among those sold in at least 26 of its 52 complete weeks. Selection uses only information known when evaluation begins.
 
-**Capacity** is a hypothetical limit of 6,455 units on total start-of-week stock, measured in units because the data has no product sizes. It is set to the cohort's mean weekly sales (6,455.3 units) over the 51 selection weeks with invoices, rounded to a whole unit. The cohort and limit are fixed before evaluation and shared by every policy and scenario, except that capacity sensitivities apply their own factor to the same mean.
+**Capacity** is a hypothetical limit of 6,455 units on total start-of-week stock, counted in units because the data has no product sizes. It is the cohort's mean weekly sales (6,455.3 units) over the 51 selection weeks with invoices, rounded to a whole unit. The cohort and the limit are fixed before evaluation and shared by every policy and scenario, except that capacity sensitivities apply their own factor to the same mean.
 
-Each decision uses the history window (trailing 52 weeks), omitting weeks without any invoice. Each product's price is its median unit price over the 52 weeks before the decision, used both to allocate stock and to score that week. Evaluation sales reflect reversal credits known at week-end; credits learned later never rewind simulated stock.
+Each decision draws on a **history window** of past weeks (trailing 52 weeks), leaving out weeks without any invoice. Each product's price is its median unit price over the 52 weeks before the decision, used both to allocate stock and to score that week. The sales scored in a week include only the reversal credits recorded by its end, so a credit learned later never rewinds simulated stock.
 
 ## Cost model
 
-Weekly modeled cost combines holding charges on leftovers and shortage charges on recorded sales stock did not cover. The holding rate h is 5.0% of price per leftover unit-week; the shortage rate p is 30.0% of price per uncovered sales unit. Both are assumptions. Only their ratio, the **critical ratio** p / (h + p) = 0.8571, changes the stock levels preferred by the history objective. Multiplying both rates by the same amount scales every policy's cost in pounds alike. Total modeled cost sums these charges over evaluation.
+A week's modeled cost is a holding charge on the units left over plus a shortage charge on the recorded sales that stock did not cover. The holding rate h is 5.0% of the price per unit left at the end of a week; the shortage rate p is 30.0% of the price per unit of sales not covered. Both rates are assumptions, not measured costs. Only their ratio, the **critical ratio** p / (h + p) = 0.8571, changes which stock levels minimize cost over the history. Multiplying both rates by the same amount scales every policy's cost in pounds alike. Total modeled cost sums these charges over the evaluation weeks.
 
 The marginal optimizer chooses stock for all products together:
 
     minimize    Σᵢ priceᵢ · ( h · E[(xᵢ − Dᵢ)⁺] + p · E[(Dᵢ − xᵢ)⁺] )
     subject to  Σᵢ xᵢ ≤ C,   xᵢ ≥ carriedᵢ,   xᵢ whole units
 
-For product i, xᵢ is start-of-week stock, carriedᵢ is stock carried in, priceᵢ is its price, and Dᵢ is one week's sales. C is capacity; h and p are the rates above. The positive-part symbol ⁺ means the larger of the bracketed value and zero; E averages equally over the history weeks. Each product's expected cost is convex, so successive units offer diminishing reductions. Assigning each next unit where it reduces cost most, until none helps or capacity is full, reaches the minimum for that history. “Optimal” refers to this fitted objective.
+For product i, xᵢ is start-of-week stock, carriedᵢ the stock carried in, priceᵢ its price and Dᵢ one week's sales. C is the capacity; h and p are the rates above. (z)⁺ means the larger of z and zero, and E averages over the weeks of the history window, each counting equally. Each product's expected cost is convex in its stock, so each added unit lowers cost less than the one before. Giving each next unit to the product where it lowers cost most, until no unit helps or the limit is reached, therefore reaches the minimum for that history. "Optimal" refers to this fitted objective, not to the weeks that follow.
 
 ## Policies
 
-A **newsvendor quantity**, or **critical fractile**, is the smallest stock level at which the history's share of weeks with sales at or below it reaches the critical ratio.
+A product's **newsvendor quantity** (its **critical fractile**) is the smallest stock level at which the share of history weeks with sales at or below it reaches the critical ratio.
 
 | Policy | How it sets start-of-week stock |
 | --- | --- |
 | Proportional to recent mean | Shares the limit in proportion to each product's mean weekly sales over the history window. |
-| Scaled critical-fractile | Scales the products' newsvendor quantities down to the limit when their total exceeds it. |
+| Scaled critical-fractile | Takes each product's newsvendor quantity and scales them all down to the limit when their total exceeds it. |
 | Marginal optimizer | Solves the problem above, starting from carried stock. |
-| Marginal optimizer, equal prices | Uses the same optimizer with every price set to one, then scores at real prices to show what price weighting contributes. |
-| Unconstrained newsvendor | Uses each product's newsvendor quantity without a shared limit; a reference only. |
+| Marginal optimizer, equal prices | The same allocation with every price set to one, scored at real prices: a diagnostic of what price weighting contributes. |
+| Unconstrained newsvendor | Each product's newsvendor quantity with no limit: a reference only. |
 
-The target rules top up carried stock. If their targets do not fit beside it, free space is shared in proportion to each product's shortfall. Stock is never thrown away.
+The proportional and scaled critical-fractile rules set a target for each product and order the gap between carried stock and target. When the gaps together exceed the free space under the limit, that space is shared in proportion to the gaps. No policy discards stock.
 
 ## Results and uncertainty
 
-**Fill rate** is the share of recorded sales units simulated stock covered. It is not a service level: sales the retailer could not make were never recorded. A **SKU** is a product's stock code; **SKU-weeks short** is the share of product-weeks with some sales not covered.
+**Fill rate** is the share of recorded sales units that simulated stock covered. It is not a service level, because sales the retailer could not make were never recorded. A **SKU** is a product, identified by its stock code; **SKU-weeks short** is the share of product-weeks with some sales not covered.
 
 | Policy | Within the limit | Modeled cost | Holding | Shortage | Fill rate | SKU-weeks short | Mean start stock | Mean leftover | Units ordered |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -53,16 +55,18 @@ The target rules top up carried stock. If their targets do not fit beside it, fr
 | Marginal optimizer, equal prices | yes | £79,513 | £21,628 | £57,885 | 77.9% | 22.0% | 6,455 | 2,431 | 209,937 |
 | Unconstrained newsvendor (reference, ignores the limit) | no | £76,403 | £45,044 | £31,359 | 88.4% | 10.0% | 9,701 | 5,132 | 239,821 |
 
-Comparisons subtract the baseline's total modeled cost from the optimizer's; the relative difference divides this by the baseline's cost. Negative values mean the optimizer cost less.
+Each comparison subtracts the baseline's total modeled cost from the optimizer's; the relative difference divides that by the baseline's cost. Negative values mean the optimizer cost less.
 
 | Comparison | Optimizer | Baseline | Difference | Relative | 95% interval | Interval checks | Weeks lower / higher |
 | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | Optimizer vs scaled critical-fractile | £81,045 | £77,909 | £3,135 | +4.0% | +0.6% to +8.3% | 2-week blocks: +1.1% to +7.9%; 8-week blocks: −0.5% to +8.6% | 20 / 32 |
 | Optimizer vs proportional to recent mean | £81,045 | £82,095 | −£1,051 | −1.3% | −4.9% to +3.3% | 2-week blocks: −4.4% to +2.6%; 8-week blocks: −6.5% to +4.2% | 27 / 25 |
 
-Uncertainty is measured by a **paired moving-block bootstrap**: both policies' weekly costs are resampled together in blocks of 4 consecutive weeks, 10,000 times. The table reports the 95% percentile interval of the relative difference. It falls back to the difference in pounds only when the relative interval is undefined. The interval checks repeat the calculation with other block lengths. A difference is called **clear** only when its interval excludes zero.
+Uncertainty comes from a **paired moving-block bootstrap**: both policies' weekly costs are resampled together in blocks of 4 consecutive weeks, 10,000 times, and the table reports the 95% percentile interval of the relative difference. It falls back to the difference in pounds only when the relative interval is undefined. The interval checks repeat the calculation with other block lengths. A difference is called **clear** only when its interval excludes zero.
 
 ## By quarter
+
+Each quarter is 13 consecutive evaluation weeks. The last columns show in which part of the year the differences in the comparison table arose.
 
 | Quarter | Proportional to recent mean | Scaled critical-fractile | Marginal optimizer | Marginal optimizer, equal prices | Optimizer minus scaled critical-fractile | Optimizer minus proportional to recent mean |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -100,7 +104,7 @@ Products are sorted by the first cost-difference column, largest first.
 
 ## Sensitivities
 
-Each row changes one setting of the primary configuration. The cohort and limit stay fixed, except that capacity rows apply their own factor to the same mean weekly sales. The primary configuration and sensitivities were declared before computing results, except the row labeled otherwise.
+Each row changes one factor of the primary configuration: the capacity, the critical ratio, how the history is built, or what counts as a sale. The original-cleaning row switches off all three data corrections together (reversal removal, the code registry and upper-case matching); the capped-history row caps each invoice's quantity of a product, in the history only, at the percentile its label names, computed over the history window and rounded up. The cohort and the limit stay fixed, except that capacity rows apply their own factor to the same mean weekly sales. All rows were declared before any result was computed, except the one whose label says otherwise.
 
 Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly lower than the scaled critical-fractile rule's in 2, clearly higher in 4 and not clearly different in 5; against proportional allocation, clearly lower in 1, clearly higher in 0 and not clearly different in 10.
 
@@ -119,11 +123,11 @@ Across the 11 sensitivities, the marginal optimizer's modeled cost was clearly l
 | History capped at each SKU's 99th-percentile order (added after an exploratory result favored it) | 6,455 | +0.7% (−3.0% to +4.5%) | −1.4% (−2.9% to +2.2%) | Scaled critical-fractile |
 | Closure weeks kept as zero-sales history | 6,455 | +3.9% (+0.5% to +8.0%) | −1.4% (−4.9% to +3.1%) | Scaled critical-fractile |
 
-## From the published design
+## From the first published design
 
-The bridge begins with the design this project first published. It uses the Year 2010-2011 sheet alone, including partial calendar weeks at both ends. The last 12 weeks are held out for evaluation; earlier weeks supply the training history. Products qualify with 20 active training weeks, ranked by training units times price. Prices come from the whole sheet. Capacity is 85% of their unconstrained quantities, calculated with NumPy's “higher” quantile rule. Targets stay fixed throughout the holdout.
+This **bridge** walks from the design this project first published to the current data rules, one correction per row. The first design uses the Year 2010-2011 sheet alone, including the partial calendar weeks at both ends. The last 12 weeks are held out and scored; the earlier weeks are the training history. Products qualify if sold in at least 20 training weeks and are ranked by training units times price. Prices come from the whole sheet. Capacity is 85% of the sum of the products' unconstrained newsvendor quantities, taken with NumPy's "higher" quantile rule. Targets are set once and held through the holdout.
 
-Each later row adds one correction, reselects products and recomputes capacity under the rules at that step. From the complete-weeks row onward, the holdout is the last 12 complete weeks; training uses every complete week before them.
+Each later row adds one correction, reselects the products and recomputes capacity under the rules then in force. From the complete-weeks row on, the holdout is the last 12 complete weeks and training is every complete week before them. The scaled critical-fractile column was not part of the first design; it is computed at every row for reference. Every row keeps the single holdout and fixed targets, so the bridge ends at the corrected version of that design, not at the weekly study above.
 
 Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lower than proportional allocation's. With all 6 corrections applied, it was 3.7% higher than proportional allocation's and 1.3% higher than the scaled critical-fractile rule's.
 
@@ -139,7 +143,7 @@ Rerun as originally designed, the marginal optimizer's modeled cost was 13.5% lo
 
 ## History windows as forecasts
 
-Each window's mean estimates next week's sales for the proportional rule; its critical-ratio quantile supplies the unconstrained newsvendor quantity. Both are scored against evaluation sales.
+Each window's mean is the proportional rule's estimate of next week's sales; its quantile at the critical ratio is the unconstrained newsvendor quantity. Both are scored against the evaluation weeks' sales. **WAPE** (weighted absolute percentage error) is the window mean's total absolute error divided by total sales. **Bias** is the mean's total error, estimate minus sales, divided by total sales; positive bias means the estimates ran high. **MAE** (mean absolute error) is the mean's absolute error per product-week, in units. **Pinball loss** scores the quantile, per product-week in units: a shortfall below sales is weighted by the critical ratio and an excess by one minus it. Lower is better for WAPE, MAE and pinball loss; bias is better the closer it is to zero. Lower forecast error does not by itself mean lower modeled cost; the history-window rows of the sensitivity table test that.
 
 | History window | WAPE | Bias | MAE (units) | Pinball loss (units) |
 | --- | ---: | ---: | ---: | ---: |
@@ -147,12 +151,12 @@ Each window's mean estimates next week's sales for the proportional rule; its cr
 | Trailing 13 weeks | 66.1% | 10.9% | 170.6 | 65.5 |
 | Same 13 weeks a year earlier | 73.7% | 24.1% | 190.5 | 67.4 |
 
-**WAPE** (weighted absolute percentage error) is the history window mean's total absolute error divided by total sales. **Bias** is that mean's total error, estimate minus sales, divided by total sales; positive bias means estimates ran high. **MAE** (mean absolute error) is the mean's absolute error averaged over product-weeks, in units. **Pinball loss** evaluates the window's critical-ratio quantile with an asymmetric absolute error, averaged per product-week: underestimates are weighted by the critical ratio and overestimates by its complement, in units. Lower is better for WAPE, MAE and pinball loss; bias is better the closer it is to zero.
-
 ## Largest week
+
+The largest spike in a cohort product's weekly sales, relative to its median selling week, and whether a credit matches its largest line:
 
 The largest single week for a cohort product, relative to its typical selling week, was 9,679 units of 84347 (ROTATING SILVER ANGELS T-LIGHT HLDR) in the week of 1 November 2010, 277 times its median selling week of 35 units. Its largest line was invoice 530715 (9,360 units, a known customer). No credit in the source matches that line.
 
 ## Next-week targets
 
-`sku_decisions.csv` gives each policy's targets for the week starting 5 December 2011, the first week after evaluation, which is also the workbook's last, partial week. Targets use the complete weeks with invoices in the history window (trailing 52 weeks) before that decision, with nothing carried in.
+`sku_decisions.csv` gives the targets of every policy except the equal-price diagnostic for the week starting 5 December 2011, the first week after evaluation, which is also the workbook's last, partial week. They use the complete weeks with invoices in the history window (trailing 52 weeks) before that week, with nothing carried in.

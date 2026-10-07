@@ -2,68 +2,75 @@
 
 ## Source rows
 
-The workbook's sheets contain $sheet_rows, for $source_rows rows in all. The older sheet contains a copy of the newer sheet's first $overlap_rows rows. After confirming that the copy is identical, it is set aside, leaving $combined_rows rows to classify. Every source row receives exactly one role, including the overlap, so the reconciliation sums to the workbook.
+The workbook has two sheets ($sheet_rows), $source_rows rows in all. The older sheet ends with a copy of the newer sheet's first $overlap_rows rows; after the copy is confirmed identical it is set aside, leaving $combined_rows rows to classify. Every source row, the copy included, receives exactly one role, so the table below sums to the workbook. The roles (a role with no rows does not appear in the table):
+
+- **overlap**: the older sheet's copy of rows also held in the newer sheet.
+- **accounting_invoice**: invoices numbered with an A (accounting entries).
+- **invalid**: a missing or malformed required field, or a quantity that is not a whole, non-zero number.
+- **prompt_reversal_sale / prompt_reversal_credit**: a sale and its equal credit within $reversal_hours hours, with the same known customer, stock code, price and quantity; the credit must be strictly later.
+- **ledger_credit**: other credit lines, kept in a ledger and never netted against sales.
+- **stock_adjustment**: negative quantities on invoices that are not credits; their value in this workbook is zero.
+- **zero_price**: positive lines priced at zero.
+- **non_merchandise**: charges, accounting codes, test codes and vouchers excluded by `data/code_registry.csv`.
+- **quarantined**: manual entries whose item cannot be identified, listed in the registry.
+- **merchandise_sale**: the remaining positive, priced merchandise lines.
 
 $reconciliation_table
 
-- **overlap**: the older sheet's copy of rows also held in the newer sheet.
-- **accounting_invoice**: invoices beginning with A, used for bad-debt adjustments.
-- **invalid**: a missing or malformed required field, or a quantity that is not a whole, non-zero number.
-- **prompt_reversal_sale / prompt_reversal_credit**: a sale and its equal credit within $reversal_hours hours, with the same known customer, stock code, price and quantity; the credit must be strictly later.
-- **ledger_credit**: other credit lines, retained in a ledger and never netted against sales.
-- **stock_adjustment**: negative quantities without a credit invoice, at zero price.
-- **zero_price**: positive lines priced at zero.
-- **non_merchandise**: charges, accounting codes, test codes and vouchers excluded by `data/code_registry.csv`.
-- **quarantined**: unidentified manual entries listed in the registry.
-- **merchandise_sale**: the remaining positive, priced merchandise lines.
-
-Study **sales** means $country invoiced merchandise units after removing prompt reversals. These sales stand in for the demand that stock could have met. Removal takes effect when the credit is recorded, as explained below.
+Study **sales** means $country merchandise units after removing prompt reversals. These sales stand in for the demand that stock could have met. A removal takes effect when the credit is recorded, as explained below. A **SKU** is a product, identified by its stock code.
 
 ## The cohort
 
-The **cohort** is the fixed set of $cohort_size products selected by revenue in the selection year, $selection_first to $selection_last. Products qualify if sold in at least $min_active_weeks of that year's weeks. Selection uses only information known when evaluation begins. The cohort and capacity then stay fixed through evaluation.
+The **cohort** is the fixed set of $cohort_size products with the highest revenue in the selection year ($selection_first to $selection_last) among those sold in at least $min_active_weeks of that year's weeks. Selection uses only information known when evaluation begins. The cohort and the storage limit (capacity, defined in the results report) then stay fixed through evaluation.
 
 $selection_table
 
 ## From accepted lines to the study ($country)
 
-The stages show which lines enter sales. **Accepted** lines are positive, priced, non-credit lines under the original counting rule. **Merchandise** excludes registry codes and A invoices. The next stages remove prompt reversals, then partial weeks at the workbook's ends. The **study cohort** retains the selected $cohort_size products over the selection and evaluation years.
+The stages show which lines enter sales. **Accepted** lines are those a plain count of sales would take: positive quantity, positive price, not a credit invoice. **Merchandise** drops the registry codes and A invoices. The next stages remove prompt reversals, then the partial weeks at both ends of the data. The **study cohort** keeps the $cohort_size selected products over the selection and evaluation years.
 
 $stage_table
 
 ## Orders reversed within $reversal_hours hours
 
-$country: $prompt_pairs sale lines totaling $prompt_units units have equal credits within the reversal window; $all_prompt_pairs such pairs occur across all countries. Of the $country pairs, $cohort_prompt_pairs involve cohort products, totaling $cohort_prompt_units units.
+$prompt_pairs $country sale lines, totaling $prompt_units units, have an equal credit within the reversal window; across all countries there are $all_prompt_pairs such pairs. Of the $country pairs, $cohort_prompt_pairs involve cohort products, totaling $cohort_prompt_units units.
 
-A pair counts as sales until its credit is recorded and is removed from then on. A decision therefore uses only credits recorded before it. The largest pairs are:
+A pair counts as sales until its credit is recorded and is removed from then on, so a decision uses only credits recorded before it. The largest pairs:
 
 $largest_pairs_table
 
-`reversal_pairs.csv` identifies every pair, including each line's sheet and spreadsheet row.
+`reversal_pairs.csv` lists every pair, with each line's sheet and spreadsheet row.
 
 ## Credit lines ($country)
 
-An exact match requires an earlier sale with the same known customer, stock code, price and quantity. Each credit takes the latest unused matching sale; a sale can be matched only once. Matches later than $reversal_hours hours remain in the ledger.
+A credit matches exactly when an earlier sale has the same known customer, stock code, price and quantity. Each credit takes the latest unused matching sale, so a sale is matched at most once. The statuses in the table:
+
+- **prompt_reversal**: matched within $reversal_hours hours; the pair leaves sales.
+- **later_exact_match**: matched, but more than $reversal_hours hours after the sale; it stays in the ledger.
+- **no_earlier_equal_sale**: no unused earlier sale matches.
+- **missing_customer**: the credit has no customer ID, so it cannot be matched.
+- **not_negative**: a credit invoice line whose quantity is not negative.
+- **nonpositive_price**: a credit line whose price is not positive.
+
+**Re-invoiced** counts the later matches followed within $reversal_hours hours by an equal sale. If such a sale repeats the credited order, both sales stay in the series, so the re-invoiced units are the most that could be counted twice.
 
 $credit_table
 
-**Re-invoiced** counts later credits followed within $reversal_hours hours by an equal sale. That sale may repeat the credited one, so the reported re-invoiced units bound how many units may be counted twice in sales.
-
 ## Codes that are not merchandise ($country)
 
-The registry records each listed code's class and action. Excluded and quarantined codes both stay out of merchandise sales.
+The registry gives each listed code a class and an action. Excluded and quarantined codes both stay out of merchandise sales; the action only records why.
 
 $registry_table
 
 ## Retained codes that are not digits plus a letter suffix ($country)
 
-These codes remain classified as merchandise.
+These codes are neither digits with an optional letter suffix nor listed in the registry, so they remain merchandise. They are listed so a reader can check that none is a charge or an adjustment.
 
 $unusual_table
 
 ## Cohort codes written more than one way
 
-Stock codes are matched after trimming surrounding spaces and converting to upper case. Suffixes are retained.
+Stock codes are matched after trimming surrounding spaces and converting to upper case. Suffixes are kept.
 
 $alias_table
 
@@ -75,17 +82,17 @@ $drift_table
 
 ## Concentration of the cohort's sales
 
-These shares cover the selection and evaluation years and use all sales units as the denominator. **Anonymous** lines have no customer ID. **Top customer** and **top invoice** are the largest single customer's and invoice's shares.
+These shares cover the selection and evaluation years and are shares of all sales units. **Anonymous** lines have no customer ID. **Top customer** and **top invoice** are the largest single customer's and the largest single invoice's shares. High shares flag products whose sales depend on a few buyers or orders.
 
 $concentration_table
 
 ## Calendar
 
-Weeks run Monday to Sunday. Complete weeks span $first_complete_week to $last_complete_week; partial weeks at both ends are excluded. Weeks with no invoice in any country: $closure_weeks. They are omitted from history samples and scored as weeks with no sales. Selection starts on $selection_first; evaluation runs from $evaluation_first to $evaluation_last.
+Weeks run Monday to Sunday. The complete weeks run from $first_complete_week to $last_complete_week; the partial weeks at both ends are left out. Weeks with no invoice in any country: $closure_weeks. Such a week is left out of history samples and scored as a week with no sales. Selection starts on $selection_first; evaluation runs from $evaluation_first to $evaluation_last.
 
 ## Repeated lines
 
-Identical source rows are retained as recorded.
+Identical source rows are kept as recorded: nothing in the workbook tells a duplicated row from a genuine repeat line.
 
 $repeated_table
 
@@ -100,7 +107,7 @@ One row per policy, summarizing the primary configuration's evaluation weeks.
 | `policy` | Policy display name |
 | `allocated_units` | Mean total start-of-week stock, units |
 | `fill_rate` | Share of recorded sales units covered by stock |
-| `stockout_rate` | Share of simulated product-weeks with some recorded sales not covered |
+| `stockout_rate` | Share of simulated product-weeks with some recorded sales not covered (SKU-weeks short in the results report) |
 | `holding_cost` | Total modeled holding cost, £ |
 | `shortage_cost` | Total modeled shortage cost, £ |
 | `total_cost` | Total holding plus shortage cost, £ |
@@ -113,7 +120,7 @@ One row per policy, summarizing the primary configuration's evaluation weeks.
 
 ### `sku_decisions.csv`
 
-One row per cohort product, with each policy's targets for the week after evaluation (`decision_week`). Targets start with nothing carried in and use complete weeks with invoices in the primary history window before the decision.
+One row per cohort product, with the targets of every policy except the equal-price diagnostic for the week after evaluation (`decision_week`). Targets start with nothing carried in and use complete weeks with invoices in the primary history window before the decision.
 
 | Column | Meaning |
 | --- | --- |
@@ -137,7 +144,7 @@ One row per cohort product, with each policy's targets for the week after evalua
 
 ### `forecast_metrics.csv`
 
-One row per history window, scored over evaluation. The mean supplies the point estimate; the critical-ratio quantile supplies the pinball-loss estimate.
+One row per history window, scored over the evaluation weeks. The window's mean is the point estimate; its quantile at the critical ratio, `shortage_rate / (holding_rate + shortage_rate)`, is scored by pinball loss.
 
 | Column | Meaning |
 | --- | --- |
