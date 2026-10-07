@@ -248,6 +248,11 @@ class FixtureTests(unittest.TestCase):
                 self.edit("weekly_sales.csv", change)
                 self.assertEqual(self.failing(), {"weekly_sales"})
 
+    def test_a_study_the_data_cannot_hold_never_agrees(self):
+        self.assertEqual(self.failing(config=replace(CONFIG, evaluation_weeks=3)), {"weekly_sales"})
+        self.edit("weekly_sales.csv", lambda frame: frame.iloc[:0])
+        self.assertEqual(self.failing(config=replace(CONFIG, country="Germany")), {"weekly_sales"})
+
     def test_the_cohort_follows_the_configuration(self):
         # 22423 sold in both selection weeks for £89.25, 85123A in one for £40.80 (its Sunday sale
         # was reversed on Monday); 21212 sold only in the evaluation weeks.

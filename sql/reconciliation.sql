@@ -241,7 +241,8 @@ WHERE NOT EXISTS (
 );
 
 -- check: weekly_sales
--- Exactly one published row for every study week and cohort code, and no other row; its
+-- The configured study fits the data (enough complete weeks and a cohort), and there is
+-- exactly one published row for every study week and cohort code, and no other row; its
 -- period and closure flag as above; units the week's sales with every published pair
 -- removed; units_at_week_close those with only the removals known before the next Monday;
 -- revenue the remaining units times their prices.
@@ -263,7 +264,13 @@ WITH expected AS (
   WHERE s.sku IN (SELECT sku FROM cohort)
   GROUP BY s.week_start, s.sku
 ), cell AS (
-  SELECT week_start, sku FROM expected UNION SELECT week_start, sku FROM published
+  SELECT week_start, sku FROM expected
+  UNION
+  SELECT week_start, sku FROM published
+  UNION  -- a study the data cannot hold never agrees, even with an empty file
+  SELECT 'the data has too few complete weeks or no cohort for the configured study', NULL
+  WHERE (SELECT COUNT(*) FROM study_week) < (SELECT selection_weeks + evaluation_weeks FROM params)
+     OR NOT EXISTS (SELECT 1 FROM cohort)
 )
 SELECT x.week_start, x.sku, e.period AS study_period, p.copies, p.period, p.closure,
        p.units AS published_units, COALESCE(k.units, 0) AS ledger_units,
