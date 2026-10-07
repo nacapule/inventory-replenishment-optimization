@@ -542,6 +542,15 @@ class ValidationTests(unittest.TestCase):
         self.assertRejected(model.simulate, ["A"], [[1]], ["2.0"], model.fixed_targets({"A": 1}), None, 1, 1)
         self.assertRejected(model.critical_ratio, None, 1)
 
+    def test_numpy_integers_stay_exact(self):
+        weights = {"A": np.int64(1), "B": np.float64(0.1)}
+        self.assertEqual(model.proportional_allocation(weights, 300), {"A": 273, "B": 27})
+        histories = {"A": [1] * 42, "B": [1] * 42}
+        prices = {"A": np.int64(2), "B": np.float64(0.1)}
+        self.assertEqual(model.optimize_capacity(histories, prices, 0.05, 0.30, 1), {"A": 1, "B": 0})
+        shortage = Fraction("0.30000000000000000001")
+        self.assertEqual(model.critical_ratio(np.int64(1), str(shortage)), shortage / (1 + shortage))
+
     def test_empty_histories_are_rejected(self):
         self.assertRejected(model.optimize_capacity, {"A": []}, None, 1, 4, None)
         self.assertRejected(model.expected_cost, [], 0, 1, 4)

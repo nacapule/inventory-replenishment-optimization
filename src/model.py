@@ -84,6 +84,8 @@ def _sorted_history(histories: Mapping, sku: str) -> list[int]:
 def _rate(value: object, name: str) -> Fraction:
     """A finite non-negative rate, exactly. A float is read as the decimal it prints as
     (0.05 is 1/20), which is the value written in a configuration file."""
+    if isinstance(value, numbers.Integral):
+        value = int(value)  # a NumPy integer inside a Fraction would overflow
     try:
         rate = Fraction(repr(float(value)) if isinstance(value, float) else value)
     except (TypeError, ValueError, OverflowError, ZeroDivisionError):
@@ -97,6 +99,8 @@ def _amount(value: object, name: str, positive: bool) -> Fraction:
     """A finite price (positive) or weight (non-negative), at its exact value."""
     finite = isinstance(value, numbers.Real) and math.isfinite(value)
     if finite and (value > 0 if positive else value >= 0):
+        if isinstance(value, numbers.Integral):
+            return Fraction(int(value))  # a NumPy integer inside a Fraction would overflow
         return Fraction(value) if isinstance(value, numbers.Rational) else Fraction(float(value))
     kind = "positive" if positive else "non-negative"
     raise ValueError(f"{name} must be a finite {kind} number, got {value!r}")
