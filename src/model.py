@@ -30,7 +30,6 @@ import math
 import numbers
 from bisect import bisect_right
 from dataclasses import dataclass
-from decimal import Decimal
 from fractions import Fraction
 from typing import Callable, Mapping, Sequence
 
@@ -45,97 +44,30 @@ _RECORD_FIELDS = ("opening", "ordered", "start", "sales", "covered", "lost", "cl
 # Input checks ---------------------------------------------------------------------------
 
 
-def _exact(value: object) -> Fraction | None:
-    """The exact value of a finite real number, or None for anything else (booleans,
-    strings, complex numbers, dates and durations, NaN, infinities)."""
-    if isinstance(value, (bool, np.bool_, np.timedelta64, np.datetime64)):
-        return None
-    if isinstance(value, numbers.Rational):
-        return Fraction(int(value.numerator), int(value.denominator))
-    if isinstance(value, Decimal):
-        return Fraction(value) if value.is_finite() else None
-    if isinstance(value, numbers.Real):
-        number = float(value)
-        return Fraction(number) if math.isfinite(number) else None
-    return None
-
-
-def _rate(value: object, name: str) -> Fraction:
-    """A finite non-negative rate as an exact fraction; a float is read as the decimal it
-    prints as (0.05 is 1/20), which is the value written in a configuration file."""
-    if isinstance(value, str):
-        try:
-            rate = Fraction(value)
-        except (ValueError, ZeroDivisionError):
-            rate = None
-    elif isinstance(value, numbers.Real) and not isinstance(value, (numbers.Rational, bool)):
-        number = float(value)
-        # NumPy floats print their own shortest decimal (float32 0.05 prints as 0.05).
-        text = str(value) if isinstance(value, np.floating) else repr(number)
-        rate = Fraction(text) if math.isfinite(number) else None
-    else:
-        rate = _exact(value)
-    if rate is None:
-        raise ValueError(f"{name} must be a finite number, got {value!r}")
-    if rate < 0:
-        raise ValueError(f"{name} must be non-negative, got {value!r}")
-    return rate
-
-
-def _amount(value: object, name: str, positive: bool) -> Fraction:
-    """The exact value of a finite price (positive) or weight (non-negative)."""
-    exact = _exact(value)
-    if exact is None or not (exact > 0 if positive else exact >= 0):
-        kind = "positive" if positive else "non-negative"
-        raise ValueError(f"{name} must be a finite {kind} number, got {value!r}")
-    return exact
+def _units(values: object, name: str) -> np.ndarray:
+    """Non-negative whole units as int64: integers, or floats with integral values."""
+    array = np.asarray(values)
+    if array.dtype.kind not in "iuf":
+        raise ValueError(f"{name} must hold numbers of units, got {array.dtype} values")
+    if array.dtype.kind == "f":
+        if not np.isfinite(array).all():
+            raise ValueError(f"{name} contains NaN or infinite values")
+        if (array != np.trunc(array)).any():
+            raise ValueError(f"{name} contains fractional units")
+    if array.size and array.min() < 0:
+        raise ValueError(f"{name} contains negative units")
+    return array.astype(np.int64)
 
 
 def _count(value: object, name: str) -> int:
-    """A non-negative whole number of units (a value that equals an integer exactly)."""
-    exact = _exact(value)
-    if exact is None or exact.denominator != 1 or exact < 0:
-        raise ValueError(f"{name} must be a non-negative integer, got {value!r}")
-    return int(exact)
+    array = _units(value, name)
+    if array.ndim:
+        raise ValueError(f"{name} must be a single number of units")
+    return int(array)
 
 
 def _capacity(value: object) -> int | None:
     return None if value is None else _count(value, "capacity")
-
-
-def _units(values: object, name: str) -> np.ndarray:
-    """An int64 array of non-negative whole units. Every value must equal an integer
-    exactly; integral floats are accepted, booleans, strings and NaN are not."""
-    if isinstance(values, np.ndarray) and values.dtype.kind not in "iufO":
-        raise ValueError(f"{name} must contain numbers of units, not {values.dtype}")
-    if isinstance(values, np.ndarray) and values.dtype.kind in "iuf":
-        array = values
-        if array.dtype.kind == "f":
-            if not np.isfinite(array).all():
-                raise ValueError(f"{name} contains NaN or infinite values")
-            if not (array == np.trunc(array)).all():
-                raise ValueError(f"{name} contains fractional units")
-    else:
-        objects = np.asarray(values, dtype=object)
-        whole = []
-        for value in objects.flat:
-            if type(value) is not int:
-                exact = _exact(value)
-                if exact is None:
-                    numeric = isinstance(value, (numbers.Real, Decimal)) and not isinstance(
-                        value, (bool, np.bool_))
-                    problem = "NaN or infinite values" if numeric else f"a non-number {value!r}"
-                    raise ValueError(f"{name} contains {problem}")
-                if exact.denominator != 1:
-                    raise ValueError(f"{name} contains fractional units")
-                value = int(exact)
-            whole.append(value)
-        array = np.array(whole, dtype=object).reshape(objects.shape)
-    if array.size and array.min() < 0:
-        raise ValueError(f"{name} contains negative units")
-    if array.size and array.max() > 2**53:
-        raise ValueError(f"{name} contains values too large to count exactly")
-    return array.astype(np.int64)
 
 
 def _samples(values: object, name: str) -> np.ndarray:
@@ -145,23 +77,40 @@ def _samples(values: object, name: str) -> np.ndarray:
     return array
 
 
+def _sorted_history(histories: Mapping, sku: str) -> list[int]:
+    return np.sort(_samples(histories[sku], f"history for {sku!r}")).tolist()
+
+
+def _rate(value: object, name: str) -> Fraction:
+    """A finite non-negative rate, exactly. A float is read as the decimal it prints as
+    (0.05 is 1/20), which is the value written in a configuration file."""
+    try:
+        rate = Fraction(repr(float(value)) if isinstance(value, float) else value)
+    except (TypeError, ValueError, OverflowError, ZeroDivisionError):
+        raise ValueError(f"{name} must be a finite number, got {value!r}") from None
+    if rate < 0:
+        raise ValueError(f"{name} must be non-negative, got {value!r}")
+    return rate
+
+
+def _amount(value: object, name: str, positive: bool) -> Fraction:
+    """A finite price (positive) or weight (non-negative), at its exact value."""
+    finite = isinstance(value, numbers.Real) and math.isfinite(value)
+    if finite and (value > 0 if positive else value >= 0):
+        return Fraction(value) if isinstance(value, numbers.Rational) else Fraction(float(value))
+    kind = "positive" if positive else "non-negative"
+    raise ValueError(f"{name} must be a finite {kind} number, got {value!r}")
+
+
 def _sku_keys(mapping: object, name: str) -> list[str]:
-    if not isinstance(mapping, Mapping):
-        raise ValueError(f"{name} must be a mapping from SKU to values")
-    keys = list(mapping)
-    for key in keys:
-        if not isinstance(key, str):
-            raise ValueError(f"{name} keys must be SKU strings, got {key!r}")
-    return keys
+    if not isinstance(mapping, Mapping) or not all(isinstance(key, str) for key in mapping):
+        raise ValueError(f"{name} must be a mapping from SKU strings to values")
+    return list(mapping)
 
 
 def _require_keys(mapping: Mapping, skus: Sequence[str], name: str) -> None:
-    if not isinstance(mapping, Mapping):
-        raise ValueError(f"{name} must be a mapping from SKU to values")
-    if set(mapping) != set(skus):
-        missing = sorted(set(skus) - set(mapping), key=str)
-        extra = sorted(set(mapping) - set(skus), key=str)
-        raise ValueError(f"{name} keys must match the SKUs (missing {missing}, extra {extra})")
+    if not isinstance(mapping, Mapping) or set(mapping) != set(skus):
+        raise ValueError(f"{name} must have exactly the SKUs {sorted(skus)} as keys")
 
 
 def _quantities(mapping: object, name: str) -> dict[str, int]:
@@ -173,32 +122,6 @@ def _floors(floors: Mapping[str, int] | None, skus: Sequence[str]) -> dict[str, 
         return {sku: 0 for sku in skus}
     _require_keys(floors, skus, "floors")
     return {sku: _count(floors[sku], f"floors[{sku!r}]") for sku in skus}
-
-
-def _sorted_history(values: object, sku: str) -> list[int]:
-    return np.sort(_samples(values, f"history for {sku!r}")).tolist()
-
-
-def _price_matrix(prices: object, shape: tuple[int, int]) -> np.ndarray:
-    """Prices as floats of shape (weeks, SKUs), from one price per SKU or one per SKU-week."""
-    if isinstance(prices, np.ndarray) and prices.dtype.kind not in "iufO":
-        raise ValueError(f"prices must be numbers, not {prices.dtype}")
-    if isinstance(prices, np.ndarray) and prices.dtype.kind in "iuf":
-        price = prices.astype(np.float64)
-    else:
-        objects = np.asarray(prices, dtype=object)
-        try:
-            values = [float(_amount(value, "prices", True)) for value in objects.flat]
-        except OverflowError:
-            raise ValueError("prices must be finite") from None
-        price = np.array(values, dtype=np.float64).reshape(objects.shape)
-    if not (np.isfinite(price).all() and (price > 0).all()):
-        raise ValueError("prices must be positive and finite")
-    if price.shape == shape[1:]:
-        price = np.broadcast_to(price, shape)
-    if price.shape != shape:
-        raise ValueError(f"prices must have shape {shape[1:]} or {shape}, got {price.shape}")
-    return price
 
 
 # Costs ----------------------------------------------------------------------------------
@@ -256,7 +179,7 @@ def optimize_capacity(
     as adding them one at a time.
     """
     skus = _sku_keys(histories, "histories")
-    samples = {sku: _sorted_history(histories[sku], sku) for sku in skus}
+    samples = {sku: _sorted_history(histories, sku) for sku in skus}
     if prices is None:
         price = {sku: Fraction(1) for sku in skus}
     else:
@@ -319,7 +242,7 @@ def upper_quantile_targets(
     ratio = critical_ratio(holding_rate, shortage_rate)
     result = {}
     for sku in _sku_keys(histories, "histories"):
-        values = _sorted_history(histories[sku], sku)
+        values = _sorted_history(histories, sku)
         result[sku] = values[math.ceil((len(values) - 1) * ratio)]
     return result
 
@@ -461,7 +384,13 @@ def simulate(
     if units.ndim != 2 or units.shape[1] != len(names):
         raise ValueError(f"sales must be a (weeks x {len(names)}) matrix, got shape {units.shape}")
     weeks = units.shape[0]
-    price = _price_matrix(prices, units.shape)
+    price = np.asarray(prices)
+    if price.dtype.kind not in "iuf" or not (np.isfinite(price).all() and (price > 0).all()):
+        raise ValueError("prices must be positive finite numbers")
+    if price.shape == (len(names),):
+        price = np.broadcast_to(price, units.shape)
+    if price.shape != units.shape:
+        raise ValueError(f"prices must have shape ({len(names)},) or {units.shape}, got {price.shape}")
     limit = _capacity(capacity)
     holding = float(_rate(holding_rate, "holding_rate"))
     shortage = float(_rate(shortage_rate, "shortage_rate"))
@@ -478,11 +407,9 @@ def simulate(
         if stock.shape != (len(names),):
             raise ValueError(f"stock for week {week} must have one value per SKU")
         if (stock < carried).any():
-            below = [sku for sku, low in zip(names, stock < carried) if low]
-            raise ValueError(f"week {week}: stock below carried stock for {below}")
-        total = sum(stock.tolist())
-        if limit is not None and total > limit:
-            raise ValueError(f"week {week}: stock {total} exceeds capacity {limit}")
+            raise ValueError(f"week {week}: stock below the stock carried in")
+        if limit is not None and int(stock.sum()) > limit:
+            raise ValueError(f"week {week}: stock {int(stock.sum())} exceeds capacity {limit}")
         opening[week], start[week] = carried, stock
         covered[week] = np.minimum(units[week], stock)
         carried = stock - covered[week]
@@ -490,15 +417,9 @@ def simulate(
     ordered = start - opening
     lost = units - covered
     closing = start - covered
-    balanced = (
-        (ordered >= 0).all()
-        and (lost >= 0).all()
-        and (closing >= 0).all()
-        and np.array_equal(opening[1:], closing[:-1])
-        and not opening[:1].any()
-        and (limit is None or all(sum(row) <= limit for row in start.tolist()))
-    )
-    if not balanced:
+    if not ((ordered >= 0).all() and (lost >= 0).all() and (closing >= 0).all()
+            and np.array_equal(opening[1:], closing[:-1]) and not opening[:1].any()
+            and (limit is None or (start.sum(axis=1) <= limit).all())):
         raise AssertionError("simulated stock does not balance")
     record = {
         "opening": opening, "ordered": ordered, "start": start, "sales": units,
