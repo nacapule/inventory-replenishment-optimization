@@ -168,11 +168,23 @@ class WordingTests(unittest.TestCase):
                       report._bridge_sentence(current))
         bridge[3]["skus_added"] = "12345"  # a new product in the cohort is a change
         self.assertNotIn(bridge[3]["label"], report._bridge_sentence(current))
+        bridge[3] = dict(bridge[2], step=bridge[3]["step"], label=bridge[3]["label"], skus=bridge[2]["skus"] + 1)
+        self.assertNotIn(bridge[3]["label"], report._bridge_sentence(current))  # more products, none listed
 
-    def test_critical_ratio_shows_its_fraction_only_when_rounded(self):
-        self.assertEqual(report._ratio(0.05, 0.30), "0.8571 (6/7)")
-        self.assertEqual(report._ratio(0.05, 0.95), "0.9500")
-        self.assertEqual(report._ratio(0.25, 0.75), "0.7500")
+    def test_critical_ratio_shows_its_fraction_only_when_rounded_and_exact(self):
+        def shown(holding, shortage, ratio):
+            current = copy.deepcopy(summary())
+            current["study"].update(holding_rate=holding, shortage_rate=shortage, critical_ratio=ratio)
+            return report.insight_values(current)["critical_ratio"]
+        self.assertEqual(shown(0.05, 0.3, 0.857143), "0.8571 (6/7)")
+        self.assertEqual(shown(0.05, 0.95, 0.95), "0.9500")
+        self.assertEqual(shown(0.25, 0.75, 0.75), "0.7500")
+        self.assertEqual(shown(0.05, 0.0, 0.0), "0.0000")
+        # The summary keeps six places: rates of 0.05000049 and 0.29999951 print as 0.05 and 0.3,
+        # 1e-6 and 1.4e-6 as 1e-6 twice, 1e-7 and 3e-7 as zero; the stored ratio is what counts.
+        self.assertEqual(shown(0.05, 0.3, 0.857141), "0.8571")
+        self.assertEqual(shown(0.000001, 0.000001, 0.583333), "0.5833")
+        self.assertEqual(shown(0.0, 0.0, 0.75), "0.7500")
         text = report.render("insight_report.md", report.insight_values(summary()))
         self.assertIn("p / (h + p) = 0.8571 (6/7)", text)
 

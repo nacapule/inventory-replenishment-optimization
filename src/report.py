@@ -379,7 +379,7 @@ def _bridge_sentence(summary, compact=False) -> str:
         text += (f" With all {len(bridge) - 1} corrections applied, it was "
                  f"{compared(last['optimizer_vs_proportional'], proportional)}"
                  + ("." if compact else f" and {compared(last['optimizer_vs_scaled_fractile'], scaled)}."))
-    same = ("capacity_units", "optimizer_cost", "scaled_fractile_cost", "proportional_cost")
+    same = ("skus", "capacity_units", "optimizer_cost", "scaled_fractile_cost", "proportional_cost")
     unchanged = [f'"{row["label"]}"' for before, row in zip(bridge, bridge[1:])
                  if not row["skus_added"] and not row["skus_removed"] and all(row[k] == before[k] for k in same)]
     if unchanged:
@@ -449,12 +449,19 @@ def _largest(summary) -> str:
     return text + " No credit matches that line under the exact-matching rule."
 
 
-def _ratio(holding, shortage) -> str:
-    """The critical ratio to four places, with its exact fraction when the four places round it."""
-    exact = model.critical_ratio(holding, shortage)
-    text = f"{float(exact):.4f}"
-    return text + (f" ({exact.numerator}/{exact.denominator})"
-                   if Fraction(text) != exact and exact.denominator <= 1000 else "")
+def _ratio(study) -> str:
+    """The critical ratio to four places, with its exact fraction when the four places round it.
+
+    The summary keeps rates and ratio to six places, so the fraction is worked out from the
+    rates and shown only when it reproduces the summary's ratio."""
+    ratio = study["critical_ratio"]
+    text = f"{ratio:.4f}"
+    try:
+        exact = model.critical_ratio(study["holding_rate"], study["shortage_rate"])
+    except ValueError:  # rates that round to zero
+        return text
+    shown = exact.denominator <= 1000 and Fraction(text) != exact and round(float(exact), 6) == ratio
+    return text + (f" ({exact.numerator}/{exact.denominator})" if shown else "")
 
 
 def insight_values(summary: dict) -> dict:
@@ -489,7 +496,7 @@ def insight_values(summary: dict) -> dict:
         "selection_first": day(study["selection"]["first_week"]), "selection_last": day(study["selection"]["last_week"], 6),
         "evaluation_first": day(study["evaluation"]["first_week"]), "evaluation_last": day(study["evaluation"]["last_day"]),
         "evaluation_weeks": study["evaluation"]["weeks"], "holding_pct": pct(study["holding_rate"]),
-        "shortage_pct": pct(study["shortage_rate"]), "critical_ratio": _ratio(study["holding_rate"], study["shortage_rate"]),
+        "shortage_pct": pct(study["shortage_rate"]), "critical_ratio": _ratio(study),
         "window_label": study["window_label"].lower(), "min_active_weeks": study["min_active_weeks"],
         "confidence": f"{level}%", "block_weeks": comparisons[0]["block_weeks"],
         "policy_table": table(_policy_rows(summary), ["Policy", "Within the limit", "Modeled cost", "Holding",

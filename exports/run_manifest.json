@@ -224,7 +224,7 @@
     "src/data.py": "3625aae2487cd891e65ba9d4d67f986d77715113d3a2555190619e48540b6ba0",
     "src/model.py": "2e718f355fde33b2392f5c83a9ecc87d31bb5ad93d5d48b8a82fd1b74b30e702",
     "src/experiment.py": "e26a0fdb73785e4c26cf40b1267059afe1a1cec5dc7a60a2be29df34d2782ca0",
-    "src/report.py": "4d0628decc7bdf1a9652f8ecb92425b690e64ea1a0127ec39918eaa88fbedf9a",
+    "src/report.py": "32ff59201cf6bee7faab153d843537d1abdf6eae650c106dd2bd8e54ffc8ea7f",
     "src/replenishment.py": "02d144ff8110c152a717c8c79e56abfd7dfd5dfe6a7381a2547a78e36caeb647",
     "data/code_registry.csv": "a7d6e53ab41efd467b335b51966ef66210bb5f866880c1b22c407949e420bbd5",
     "templates/insight_report.md": "688a851614514e63993aced98ffdb0f0708b0cf57fdf3d924adf3622149c0dd5",
