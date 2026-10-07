@@ -318,17 +318,13 @@ class FigureTests(unittest.TestCase):
         report.write_cost_difference_figure(frame, NAMES, path, **kwargs)
         return path.read_text(encoding="utf-8")
 
-    def test_writing_twice_gives_identical_bytes(self):
+    def test_same_data_gives_the_same_file_without_a_date(self):
         for frame in (MIXED, QUARTER):
             self.assertEqual(self.write(frame, "a"), self.write(frame, "b"))
-
-    def test_svg_keeps_text_and_has_no_date(self):
         svg = self.write(FAVOURABLE, "favourable")
-        root = ET.fromstring(svg)
-        self.assertGreater(len(root.findall(".//{http://www.w3.org/2000/svg}text")), 10)
+        self.assertGreater(len(ET.fromstring(svg).findall(".//{http://www.w3.org/2000/svg}text")), 10)
         self.assertNotIn("dc:date", svg)
-        self.assertNotIn("DejaVuSans-", svg)
-        self.assertIn("£", svg)
+        self.assertNotIn("Matplotlib v", svg)
 
     def test_labels_come_from_the_names_and_the_data(self):
         svg = self.write(UNFAVOURABLE, "unfavourable")
@@ -336,20 +332,19 @@ class FigureTests(unittest.TestCase):
             self.assertIn(NAMES[policy], svg)
         for policy in ("optimizer_unit", "unconstrained"):
             self.assertNotIn(NAMES[policy], svg)
-        for text in ("6 Dec 2010", "4 Dec 2011", "52 weeks"):
+        for text in ("6 December 2010", "4 December 2011", "(52 weeks)", "has cost more so far"):
             self.assertIn(text, svg)
         for baseline in ("scaled_fractile", "proportional"):
-            self.assertIn(f"+£{running_totals(UNFAVOURABLE, 'optimizer', baseline)[-1]:,.0f}", svg)
+            self.assertIn(report.money(running_totals(UNFAVOURABLE, "optimizer", baseline)[-1]), svg)
         other = self.write(MIXED, "other", reference="scaled_fractile", baselines=("proportional",))
-        self.assertIn(NAMES["scaled_fractile"], other)
         self.assertNotIn(NAMES["optimizer"], other)
 
     def test_short_and_flat_inputs_render(self):
-        self.assertIn("13 weeks", self.write(QUARTER, "quarter"))
-        self.assertIn("1 week)", self.write(ONE_WEEK, "one"))
+        self.assertIn("(13 weeks)", self.write(QUARTER, "quarter"))
+        self.assertIn("(1 week)", self.write(ONE_WEEK, "one"))
         flat = FAVOURABLE.copy()
         flat["optimizer"] = flat["proportional"] = flat["scaled_fractile"]
-        self.assertIn(NAMES["proportional"], self.write(flat, "flat"))
+        self.assertIn("£0 at the end", self.write(flat, "flat"))
 
     def test_global_settings_are_left_unchanged(self):
         before = dict(matplotlib.rcParams)

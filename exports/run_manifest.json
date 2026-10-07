@@ -224,8 +224,8 @@
   "sources": {
     "src/data.py": "3625aae2487cd891e65ba9d4d67f986d77715113d3a2555190619e48540b6ba0",
     "src/model.py": "2e718f355fde33b2392f5c83a9ecc87d31bb5ad93d5d48b8a82fd1b74b30e702",
-    "src/experiment.py": "120da4aa4973da26f19e0052748505bcd3e6d2394818e1cf2e2be3c184a76308",
-    "src/report.py": "77424addbb0e2ac479856913c0926fd2379fea68fa2b6ba2f3cefe986bc8638e",
+    "src/experiment.py": "8a5069eb856cc3fecd01f187349f00735e50d481c86c345ad84ee1e13544fa02",
+    "src/report.py": "c3084eea97f2d9ea7567c28ca6d4d852acb3a07f02d50a9ac7725edd092ac768",
     "src/replenishment.py": "ddc10b5b546e8aecf96c1e4394bb1f53b869df8250bbfae058b5c87d088e8576",
     "data/code_registry.csv": "a7d6e53ab41efd467b335b51966ef66210bb5f866880c1b22c407949e420bbd5",
     "templates/insight_report.md": "e38d6453bbdd3177a21daf1340cdd1c0ede4b1b06f2cac6dc1974ea14be64aee",
@@ -307,8 +307,8 @@
       "rows": 2080
     },
     "cost_difference.svg": {
-      "sha256": "cf467470fe5c6055bcd56a05edbdc41eb6ad23ac756a6492771815bd6db105a6",
-      "bytes": 16150
+      "sha256": "f21a32ea1de72dba72758a032749c61516e49a558cd226faef48e6532aad1d23",
+      "bytes": 31301
     },
     "insight_report.md": {
       "sha256": "375d3033ca643ca7061607165ccdcd4a37654d774581e0315f923e37046cb975",

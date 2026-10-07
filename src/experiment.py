@@ -39,7 +39,7 @@ WINDOWS = {  # name: (label, weeks back to the first sample week, number of week
     "seasonal_analog": ("Same 13 weeks a year earlier", 52, 13),
 }
 PRICE_WEEKS = 52
-CLOSURES = {"drop": "dropped from history samples", "zero": "kept as zero-sales samples"}
+CLOSURES = ("drop", "zero")  # weeks without invoices: dropped from history, or kept as zeros
 BRIDGE_STEPS = {
     "original": "Published design",
     "prompt_reversals": "Remove sales reversed within {hours} hours",
@@ -175,59 +175,54 @@ TABLES = {  # every key is required
     "bootstrap": ("block_weeks", "check_block_weeks", "resamples", "seed", "confidence"),
     "bridge": ("sheet", "skus", "min_active_weeks", "holdout_weeks", "capacity_share", "steps"),
 }
+COUNTS = {  # Config field: (table, key, smallest value allowed)
+    "size": ("input", "bytes", 1), "reversal_hours": ("input", "reversal_window_hours", 0),
+    "skus": ("cohort", "skus", 1), "min_active_weeks": ("cohort", "min_active_weeks", 0),
+    "selection_weeks": ("cohort", "selection_weeks", 1), "evaluation_weeks": ("cohort", "evaluation_weeks", 1),
+    "resamples": ("bootstrap", "resamples", 1), "seed": ("bootstrap", "seed", 0),
+    "bridge_skus": ("bridge", "skus", 1), "bridge_min_active_weeks": ("bridge", "min_active_weeks", 0),
+    "bridge_holdout_weeks": ("bridge", "holdout_weeks", 1),
+}
 
 
 def parse_config(raw: dict) -> Config:
     _keys(raw, (*TABLES, "primary", "sensitivity"), "config", (*TABLES, "primary"))
-    source, cohort, compare, boot, bridge = (_keys(raw[name], keys, name, keys) for name, keys in TABLES.items())
+    for name, keys in TABLES.items():
+        _keys(raw[name], keys, name, keys)
+    counts = {field: _count(raw[table][key], f"{table} {key}", low) for field, (table, key, low) in COUNTS.items()}
+    source, compare, boot, bridge = raw["input"], raw["comparison"], raw["bootstrap"], raw["bridge"]
     primary = _scenario(raw["primary"], None)
     sensitivities = tuple(_scenario(table, primary) for table in raw.get("sensitivity", []))
-    ids = [primary.id] + [scenario.id for scenario in sensitivities]
-    if len(set(ids)) != len(ids):
+    if len({scenario.id for scenario in (primary, *sensitivities)}) != 1 + len(sensitivities):
         raise ConfigError("scenario ids must be unique")
     sha = source["sha256"]
     if not (isinstance(sha, str) and len(sha) == 64 and set(sha) <= set("0123456789abcdef")):
         raise ConfigError("input sha256 must be 64 lowercase hex digits")
-    selection = _count(cohort["selection_weeks"], "selection_weeks")
-    evaluation = _count(cohort["evaluation_weeks"], "evaluation_weeks")
-    baselines = compare["baselines"]
-    if not isinstance(baselines, list) or not baselines:
+    if counts["min_active_weeks"] > counts["selection_weeks"]:
+        raise ConfigError("min_active_weeks cannot exceed selection_weeks")
+    if not isinstance(compare["baselines"], list) or not compare["baselines"]:
         raise ConfigError("comparison baselines must be a non-empty list")
     policy = _choice(compare["policy"], POLICIES, "comparison policy")
-    baselines = tuple(_choice(name, set(POLICIES) - {policy}, "comparison baseline") for name in baselines)
-    checks = boot["check_block_weeks"]
-    if not isinstance(checks, list):
+    baselines = tuple(_choice(name, set(POLICIES) - {policy}, "comparison baseline") for name in compare["baselines"])
+    if not isinstance(boot["check_block_weeks"], list):
         raise ConfigError("check_block_weeks must be a list")
-    blocks = tuple(_count(value, "block length") for value in [boot["block_weeks"]] + checks)
-    if max(blocks) > evaluation:
+    blocks = tuple(_count(value, "bootstrap block length") for value in [boot["block_weeks"], *boot["check_block_weeks"]])
+    if max(blocks) > counts["evaluation_weeks"]:
         raise ConfigError("bootstrap blocks cannot be longer than the evaluation weeks")
-    min_active = _count(cohort["min_active_weeks"], "min_active_weeks", 0)
-    if min_active > selection:
-        raise ConfigError("min_active_weeks cannot exceed selection_weeks")
     steps = bridge["steps"]
-    if not isinstance(steps, list) or not steps or steps[0] != "original" or len(set(steps)) != len(steps):
+    if not isinstance(steps, list) or not steps or steps[0] != "original" or len(set(map(str, steps))) != len(steps):
         raise ConfigError("bridge steps must be distinct and start with 'original'")
     for step in steps:
         _choice(step, BRIDGE_STEPS, "bridge step")
-    if not isinstance(source["country"], str) or not isinstance(bridge["sheet"], str):
-        raise ConfigError("country and bridge sheet must be text")
-    _choice(bridge["sheet"], data.SHEETS, "bridge sheet")
+    if not isinstance(source["country"], str):
+        raise ConfigError("country must be text")
     return Config(
-        sha256=sha, size=_count(source["bytes"], "input bytes"), country=source["country"],
-        reversal_hours=_count(source["reversal_window_hours"], "reversal_window_hours", 0),
-        skus=_count(cohort["skus"], "cohort skus"),
-        min_active_weeks=min_active,
-        selection_weeks=selection, evaluation_weeks=evaluation, policy=policy, baselines=baselines,
-        primary=primary, sensitivities=sensitivities,
-        block_weeks=blocks[0], check_block_weeks=blocks[1:],
-        resamples=_count(boot["resamples"], "resamples"), seed=_count(boot["seed"], "seed", 0),
+        sha256=sha, country=source["country"], policy=policy, baselines=baselines, primary=primary,
+        sensitivities=sensitivities, block_weeks=blocks[0], check_block_weeks=blocks[1:],
         confidence=_exact(boot["confidence"], "confidence", positive=True, below_one=True),
-        bridge_sheet=bridge["sheet"], bridge_skus=_count(bridge["skus"], "bridge skus"),
-        bridge_min_active_weeks=_count(bridge["min_active_weeks"], "bridge min_active_weeks", 0),
-        bridge_holdout_weeks=_count(bridge["holdout_weeks"], "bridge holdout_weeks"),
+        bridge_sheet=_choice(bridge["sheet"], data.SHEETS, "bridge sheet"),
         bridge_capacity_share=_exact(bridge["capacity_share"], "bridge capacity_share"),
-        bridge_steps=tuple(steps),
-    )
+        bridge_steps=tuple(steps), **counts)
 
 
 def load_config(path) -> Config:
