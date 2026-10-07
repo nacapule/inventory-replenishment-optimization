@@ -2,7 +2,7 @@
 
 ## Source rows
 
-The workbook has two sheets (Year 2009-2010: 525,461, Year 2010-2011: 541,910; 1,067,371 rows in all). The older sheet repeats the first 22,523 rows of the newer one; that copy is set aside after checking that it is identical, which leaves 1,044,848 rows. Every source row receives exactly one role, so the table sums to the workbook.
+The workbook's sheets contain Year 2009-2010: 525,461, Year 2010-2011: 541,910, for 1,067,371 rows in all. The older sheet contains a copy of the newer sheet's first 22,523 rows. After confirming that the copy is identical, it is set aside, leaving 1,044,848 rows to classify. Every source row receives exactly one role, including the overlap, so the reconciliation sums to the workbook.
 
 | Sheet | Role | Rows | Units | Value |
 | --- | --- | ---: | ---: | ---: |
@@ -26,19 +26,22 @@ The workbook has two sheets (Year 2009-2010: 525,461, Year 2010-2011: 541,910; 1
 | Year 2010-2011 | quarantined | 299 | 7,151 | £64,627.18 |
 | Year 2010-2011 | merchandise_sale | 527,121 | 5,397,384 | £9,979,530.42 |
 
-- **overlap**: the older sheet's copy of rows that the newer sheet also holds.
-- **accounting_invoice**: invoices numbered with an A (bad-debt adjustments).
-- **invalid**: a missing or malformed field, or a quantity that is not a whole, non-zero number.
-- **prompt_reversal_sale / prompt_reversal_credit**: a sale and the equal credit that reversed it within 24 hours (same known customer, stock code, price and quantity, credit strictly later).
-- **ledger_credit**: every other credit line. Credits are kept in a ledger and never netted against sales.
-- **stock_adjustment**: negative quantities without a credit invoice, all at zero price.
-- **zero_price**: positive lines with a price of zero.
-- **non_merchandise / quarantined**: charges, accounting codes, test codes, vouchers and manual entries listed in `data/code_registry.csv`.
-- **merchandise_sale**: everything else, the lines that count as sales.
+- **overlap**: the older sheet's copy of rows also held in the newer sheet.
+- **accounting_invoice**: invoices beginning with A, used for bad-debt adjustments.
+- **invalid**: a missing or malformed required field, or a quantity that is not a whole, non-zero number.
+- **prompt_reversal_sale / prompt_reversal_credit**: a sale and its equal credit within 24 hours, with the same known customer, stock code, price and quantity; the credit must be strictly later.
+- **ledger_credit**: other credit lines, retained in a ledger and never netted against sales.
+- **stock_adjustment**: negative quantities without a credit invoice, at zero price.
+- **zero_price**: positive lines priced at zero.
+- **non_merchandise**: charges, accounting codes, test codes and vouchers excluded by `data/code_registry.csv`.
+- **quarantined**: unidentified manual entries listed in the registry.
+- **merchandise_sale**: the remaining positive, priced merchandise lines.
+
+Study **sales** means United Kingdom invoiced merchandise units after removing prompt reversals. These sales stand in for the demand that stock could have met. Removal takes effect when the credit is recorded, as explained below.
 
 ## The cohort
 
-The 20 products with the highest revenue in the selection year (7 December 2009 to 5 December 2010) among those sold in at least 26 of its weeks, counted as known when the evaluation year began. They and the capacity stay fixed for the whole study.
+The **cohort** is the fixed set of 20 products selected by revenue in the selection year, 7 December 2009 to 5 December 2010. Products qualify if sold in at least 26 of that year's weeks. Selection uses only information known when evaluation begins. The cohort and capacity then stay fixed through evaluation.
 
 | SKU | Description | Weeks sold | Units | Revenue |
 | --- | --- | ---: | ---: | ---: |
@@ -65,6 +68,8 @@ The 20 products with the highest revenue in the selection year (7 December 2009 
 
 ## From accepted lines to the study (United Kingdom)
 
+The stages show which lines enter sales. **Accepted** lines are positive, priced, non-credit lines under the original counting rule. **Merchandise** excludes registry codes and A invoices. The next stages remove prompt reversals, then partial weeks at the workbook's ends. The **study cohort** retains the selected 20 products over the selection and evaluation years.
+
 | Stage | Lines | Units | Value |
 | --- | ---: | ---: | ---: |
 | accepted | 937,632 | 9,221,072 | £17,465,896.34 |
@@ -73,11 +78,11 @@ The 20 products with the highest revenue in the selection year (7 December 2009 
 | complete_weeks | 904,260 | 8,723,607 | £15,993,518.56 |
 | study_cohort | 42,972 | 597,770 | £1,832,576.50 |
 
-Accepted lines are positive, priced, non-credit sale lines, as the project first counted them. Merchandise drops the registry codes and A invoices. Prompt reversals are then removed, then the partial weeks at both ends of the data. The study cohort is the 20 products over the selection and evaluation years.
-
 ## Orders reversed within 24 hours
 
-1,075 sale lines in the United Kingdom (210,153 units) were reversed by an equal credit within 24 hours; 1,347 such pairs exist across all countries. Each pair counts as sales until its credit is recorded and is removed from then on, so a decision never uses a credit recorded after it. 63 of the United Kingdom pairs (4,084 units) involve cohort products. The largest:
+United Kingdom: 1,075 sale lines totaling 210,153 units have equal credits within the reversal window; 1,347 such pairs occur across all countries. Of the United Kingdom pairs, 63 involve cohort products, totaling 4,084 units.
+
+A pair counts as sales until its credit is recorded and is removed from then on. A decision therefore uses only credits recorded before it. The largest pairs are:
 
 | SKU | Units | Sale | Credit | Sale time | Minutes later |
 | --- | ---: | --- | --- | --- | ---: |
@@ -87,9 +92,11 @@ Accepted lines are positive, priced, non-credit sale lines, as the project first
 | 47587A | 1,200 | 508333 | C508334 | 2010-05-14 12:00 | 4 |
 | 71477 | 1,152 | 529350 | C529352 | 2010-10-28 09:29 | 3 |
 
-Every pair, with both rows' sheet and spreadsheet row, is in `reversal_pairs.csv`.
+`reversal_pairs.csv` identifies every pair, including each line's sheet and spreadsheet row.
 
 ## Credit lines (United Kingdom)
+
+An exact match requires an earlier sale with the same known customer, stock code, price and quantity. Each credit takes the latest unused matching sale; a sale can be matched only once. Matches later than 24 hours remain in the ledger.
 
 | Status | Lag | Credits | Units | Value | Re-invoiced | Re-invoiced units |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -102,9 +109,11 @@ Every pair, with both rows' sheet and spreadsheet row, is in `reversal_pairs.csv
 | later_exact_match | over 28 days | 1,505 | 26,638 | £61,248.18 | 55 | 3,361 |
 | not_negative | unmatched | 1 | −1 | −£373.57 | 0 | 0 |
 
-A credit matches exactly when an earlier sale has the same known customer, stock code, price and quantity; each sale is used once, by the latest earlier match. Matches later than 24 hours stay in the ledger. Re-invoiced counts the later credits followed within 24 hours by an equal sale; that sale may repeat the credited one, so up to that many units may be counted twice in sales.
+**Re-invoiced** counts later credits followed within 24 hours by an equal sale. That sale may repeat the credited one, so the reported re-invoiced units bound how many units may be counted twice in sales.
 
 ## Codes that are not merchandise (United Kingdom)
+
+The registry records each listed code's class and action. Excluded and quarantined codes both stay out of merchandise sales.
 
 | Code | Class | Action | Lines | Units | Value | Description |
 | --- | --- | --- | ---: | ---: | ---: | --- |
@@ -132,7 +141,7 @@ A credit matches exactly when an earlier sale has the same known customer, stock
 
 ## Retained codes that are not digits plus a letter suffix (United Kingdom)
 
-These codes stay in sales as merchandise.
+These codes remain classified as merchandise.
 
 | Code | Lines | Units | Description |
 | --- | ---: | ---: | --- |
@@ -156,7 +165,7 @@ These codes stay in sales as merchandise.
 
 ## Cohort codes written more than one way
 
-Stock codes are matched after removing surrounding spaces and converting to upper case; suffixes are kept.
+Stock codes are matched after trimming surrounding spaces and converting to upper case. Suffixes are retained.
 
 | SKU | Written as | Lines | Units |
 | --- | --- | ---: | ---: |
@@ -173,7 +182,7 @@ Stock codes are matched after removing surrounding spaces and converting to uppe
 
 ## Cohort products recorded under more than one description
 
-Descriptions are for display only and never used to match products.
+Descriptions are display labels; they are never used to match products.
 
 | SKU | Description | Lines | Units | First seen | Last seen |
 | --- | --- | ---: | ---: | --- | --- |
@@ -199,7 +208,7 @@ Descriptions are for display only and never used to match products.
 
 ## Concentration of the cohort's sales
 
-Over the selection and evaluation years. Shares are of all units: anonymous lines have no customer ID; top customer and top invoice are the largest single customer's and invoice's shares.
+These shares cover the selection and evaluation years and use all sales units as the denominator. **Anonymous** lines have no customer ID. **Top customer** and **top invoice** are the largest single customer's and invoice's shares.
 
 | SKU | Units | Customers | Anonymous | Top customer | Top invoice |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -226,11 +235,11 @@ Over the selection and evaluation years. Shares are of all units: anonymous line
 
 ## Calendar
 
-Weeks run Monday to Sunday. The complete weeks run from 7 December 2009 to 4 December 2011; the partial weeks at each end are left out. Weeks with no invoice in any country: the week of 28 December 2009, the week of 27 December 2010. Such a week is left out of history samples and scored as a week with no sales. Selection starts on 7 December 2009; evaluation runs from 6 December 2010 to 4 December 2011.
+Weeks run Monday to Sunday. Complete weeks span 7 December 2009 to 4 December 2011; partial weeks at both ends are excluded. Weeks with no invoice in any country: the week of 28 December 2009, the week of 27 December 2010. They are omitted from history samples and scored as weeks with no sales. Selection starts on 7 December 2009; evaluation runs from 6 December 2010 to 4 December 2011.
 
 ## Repeated lines
 
-Identical source rows are kept as recorded.
+Identical source rows are retained as recorded.
 
 | Sheet | Rows | Repeated rows | Units on repeated rows |
 | --- | ---: | ---: | ---: |
@@ -241,27 +250,27 @@ Identical source rows are kept as recorded.
 
 ### `policy_comparison.csv`
 
-One row per policy over the evaluation weeks of the primary configuration.
+One row per policy, summarizing the primary configuration's evaluation weeks.
 
 | Column | Meaning |
 | --- | --- |
-| `policy` | Display name |
-| `allocated_units` | Mean start-of-week stock, units |
+| `policy` | Policy display name |
+| `allocated_units` | Mean total start-of-week stock, units |
 | `fill_rate` | Share of recorded sales units covered by stock |
-| `stockout_rate` | Share of product-weeks with some sales not covered |
-| `holding_cost` | Modeled holding cost, £ |
-| `shortage_cost` | Modeled shortage cost, £ |
-| `total_cost` | Modeled cost, £ |
+| `stockout_rate` | Share of simulated product-weeks with some recorded sales not covered |
+| `holding_cost` | Total modeled holding cost, £ |
+| `shortage_cost` | Total modeled shortage cost, £ |
+| `total_cost` | Total holding plus shortage cost, £ |
 | `policy_id` | Policy identifier |
 | `within_capacity` | Whether start-of-week stock stayed within the limit every week |
 | `capacity_units` | The limit on start-of-week stock, units |
 | `ordered_units` | Units added over the evaluation weeks |
-| `leftover_units` | Mean end-of-week stock, units |
-| `reference` | True for a policy shown for reference that ignores the limit |
+| `leftover_units` | Mean total end-of-week stock, units |
+| `reference` | True for the reference that ignores capacity |
 
 ### `sku_decisions.csv`
 
-One row per cohort product: the stock each policy would set for the week after the evaluation weeks (`decision_week`), with nothing carried in, from the complete weeks with invoices in the primary history window before it.
+One row per cohort product, with each policy's targets for the week after evaluation (`decision_week`). Targets start with nothing carried in and use complete weeks with invoices in the primary history window before the decision.
 
 | Column | Meaning |
 | --- | --- |
@@ -269,15 +278,15 @@ One row per cohort product: the stock each policy would set for the week after t
 | `description` | Most frequent description in the history window |
 | `unit_price` | Median unit price over the 52 weeks before the decision week, £ |
 | `train_mean` | Mean weekly sales over the history window, units |
-| `train_std` | Standard deviation of weekly sales over the history window |
-| `train_positive_median` | Median of the weeks with sales |
-| `train_max` | Largest weekly sales in the history window |
+| `train_std` | History weekly-sales standard deviation, units |
+| `train_positive_median` | Median history week with sales, units |
+| `train_max` | Largest history week's sales, units |
 | `active_train_weeks` | Weeks with sales in the history window |
-| `proportional_qty` | Proportional-to-recent-mean target |
-| `optimized_qty` | Marginal optimizer target |
-| `newsvendor_qty` | Unconstrained newsvendor target |
-| `spike_ratio` | `train_max` divided by `train_positive_median` (at least 1) |
-| `scaled_fractile_qty` | Scaled critical-fractile target |
+| `proportional_qty` | Proportional to recent mean target, units |
+| `optimized_qty` | Marginal optimizer target, units |
+| `newsvendor_qty` | Unconstrained newsvendor target, units |
+| `spike_ratio` | `train_max` divided by `train_positive_median` (the median taken as at least one unit) |
+| `scaled_fractile_qty` | Scaled critical-fractile target, units |
 | `anonymous_share` | Share of the window's units with no customer ID |
 | `top_customer_share` | Largest single customer's share of the window's units |
 | `top_invoice_share` | Largest single invoice's share of the window's units |
@@ -285,16 +294,16 @@ One row per cohort product: the stock each policy would set for the week after t
 
 ### `forecast_metrics.csv`
 
-One row per history window, scored over the evaluation weeks.
+One row per history window, scored over evaluation. The mean supplies the point estimate; the critical-ratio quantile supplies the pinball-loss estimate.
 
 | Column | Meaning |
 | --- | --- |
-| `method` | History window |
+| `method` | History-window display name |
 | `wape` | Total absolute error of the window mean divided by total sales |
-| `bias` | Total error of the window mean divided by total sales |
-| `mae` | Mean absolute error of the window mean per product-week, units |
-| `pinball_loss` | Mean pinball loss of the window's critical-ratio quantile per product-week, units |
-| `window` | History window identifier |
+| `bias` | Total window-mean error, estimate minus sales, divided by total sales |
+| `mae` | Window mean's absolute error per product-week, units |
+| `pinball_loss` | Critical-ratio quantile's mean pinball loss per product-week, units |
+| `window` | History-window identifier |
 
 ### `weekly_results.csv`
 
@@ -307,84 +316,109 @@ One row per policy, evaluation week and product in the primary configuration.
 | `sku` | Stock code |
 | `price` | Unit price used to decide and score the week, £ |
 | `opening` | Stock carried in, units |
-| `ordered` | Units added before the week's sales |
+| `ordered` | Units added before the week's sales, units |
 | `start` | Start-of-week stock, units |
-| `sales` | Recorded sales, units |
-| `covered` | Sales covered by stock, units |
-| `lost` | Sales not covered, units |
+| `sales` | Recorded sales as known at week-end, units |
+| `covered` | Recorded sales units covered by simulated stock |
+| `lost` | Recorded sales units not covered by simulated stock |
 | `closing` | Stock carried out, units |
-| `holding_cost` | Holding cost, £ |
-| `shortage_cost` | Shortage cost, £ |
+| `holding_cost` | Modeled holding cost, £ |
+| `shortage_cost` | Modeled shortage cost, £ |
 | `cost` | Holding plus shortage cost, £ |
 
 ### `sensitivity.csv`
 
-One row per scenario: the primary configuration first, then each sensitivity.
+One row per scenario: the primary configuration, followed by each sensitivity.
 
 | Column | Meaning |
 | --- | --- |
 | `scenario` | Scenario identifier |
-| `label` | Description |
+| `label` | Scenario description |
 | `window` | History window |
-| `closure_weeks` | How weeks without invoices enter history: dropped or kept as zero |
+| `closure_weeks` | Invoice-free weeks: dropped from history or kept as zero |
 | `capacity_factor` | Factor applied to the cohort's mean weekly sales |
 | `holding_rate` | Holding rate, share of price per unit-week |
 | `shortage_rate` | Shortage rate, share of price per unit |
 | `critical_ratio` | `shortage_rate / (holding_rate + shortage_rate)` |
 | `bulk_cap_quantile` | Quantile at which history order quantities are capped, if any |
-| `reversals` | Which matched credits remove their sale: prompt, all_exact or none |
+| `reversals` | Matched-credit removal rule: prompt, all_exact or none |
 | `registry` | Whether registry codes and A invoices are excluded |
 | `normalize_case` | Whether stock codes are matched in upper case |
-| `capacity_units` | The limit, units |
-| `proportional_cost`, `scaled_fractile_cost`, `optimizer_cost`, `optimizer_unit_cost`, `unconstrained_cost` | Modeled cost of each policy, £ |
-| `optimizer_vs_scaled_fractile`, `optimizer_vs_proportional` | Optimizer's modeled cost relative to the baseline's, minus one |
-| `optimizer_vs_scaled_fractile_low`, `optimizer_vs_scaled_fractile_high`, `optimizer_vs_proportional_low`, `optimizer_vs_proportional_high` | Bootstrap interval of that relative difference |
-| `optimizer_vs_scaled_fractile_weeks_won`, `optimizer_vs_scaled_fractile_weeks_lost`, `optimizer_vs_proportional_weeks_won`, `optimizer_vs_proportional_weeks_lost` | Weeks the optimizer cost less / more than the baseline |
-| `best_within_capacity` | Lowest-cost policy within the limit |
+| `capacity_units` | Scenario limit on start-of-week stock, units |
+| `proportional_cost` | Proportional to recent mean modeled cost, £ |
+| `scaled_fractile_cost` | Scaled critical-fractile modeled cost, £ |
+| `optimizer_cost` | Marginal optimizer modeled cost, £ |
+| `optimizer_unit_cost` | Equal-price marginal optimizer modeled cost, £ |
+| `unconstrained_cost` | Unconstrained newsvendor modeled cost, £ |
+| `optimizer_vs_scaled_fractile` | Optimizer cost divided by scaled critical-fractile cost, minus one |
+| `optimizer_vs_scaled_fractile_low` | Relative optimizer–scaled difference: lower bootstrap bound |
+| `optimizer_vs_scaled_fractile_high` | Relative optimizer–scaled difference: upper bootstrap bound |
+| `optimizer_vs_scaled_fractile_weeks_won` | Weeks optimizer cost less than scaled critical-fractile |
+| `optimizer_vs_scaled_fractile_weeks_lost` | Weeks optimizer cost more than scaled critical-fractile |
+| `optimizer_vs_proportional` | Optimizer cost divided by proportional cost, minus one |
+| `optimizer_vs_proportional_low` | Relative optimizer–proportional difference: lower bootstrap bound |
+| `optimizer_vs_proportional_high` | Relative optimizer–proportional difference: upper bootstrap bound |
+| `optimizer_vs_proportional_weeks_won` | Weeks optimizer cost less than proportional |
+| `optimizer_vs_proportional_weeks_lost` | Weeks optimizer cost more than proportional |
+| `best_within_capacity` | Lowest-cost feasible policy identifier |
 
 ### `published_bridge.csv`
 
-One row per step from the originally published design.
+One row per step from the first published design.
 
 | Column | Meaning |
 | --- | --- |
 | `step` | Step identifier |
-| `label` | The correction added at this step |
-| `train_weeks` | Training weeks |
-| `holdout_weeks` | Holdout weeks |
+| `label` | Rule change added at this step |
+| `train_weeks` | Number of training weeks |
+| `holdout_weeks` | Number of holdout weeks |
 | `first_holdout_week` | Monday of the first holdout week |
 | `capacity_units` | The limit at this step, units |
-| `skus` | Products selected |
-| `skus_added`, `skus_removed` | Products entering or leaving the selection at this step |
-| `optimizer_cost`, `scaled_fractile_cost`, `proportional_cost` | Holdout modeled cost of fixed targets, £ |
-| `optimizer_vs_proportional`, `optimizer_vs_scaled_fractile` | Optimizer's modeled cost relative to the baseline's, minus one |
-| `cohort` | The selected products |
+| `skus` | Number of selected products |
+| `skus_added` | Stock codes entering the cohort at this step |
+| `skus_removed` | Stock codes leaving the cohort at this step |
+| `optimizer_cost` | Marginal optimizer holdout cost, fixed targets, £ |
+| `scaled_fractile_cost` | Scaled critical-fractile holdout cost, fixed targets, £ |
+| `proportional_cost` | Proportional holdout cost, fixed targets, £ |
+| `optimizer_vs_proportional` | Optimizer cost divided by proportional cost, minus one |
+| `optimizer_vs_scaled_fractile` | Optimizer cost divided by scaled critical-fractile cost, minus one |
+| `cohort` | Selected stock codes |
 
 ### `reconciliation.csv`
+
+One row per source sheet and classification role, accounting for the whole workbook.
 
 | Column | Meaning |
 | --- | --- |
 | `sheet` | Source sheet |
-| `role` | Role of the row |
-| `rows` | Source rows |
-| `units` | Signed units |
-| `value` | Signed units times price, £ |
+| `role` | Classification assigned to the source rows |
+| `rows` | Source-row count for this sheet and role |
+| `units` | Sum of signed source quantities |
+| `value` | Sum of signed quantity times unit price, £ |
 
 ### `reversal_pairs.csv`
 
-One row per sale reversed by an equal credit within the window, in every country.
+One row per sale reversed by an equal credit within the reversal window, across all countries.
 
 | Column | Meaning |
 | --- | --- |
 | `sku` | Stock code |
-| `customer_id` | Customer |
+| `customer_id` | Known customer ID |
 | `price` | Unit price, £ |
-| `units` | Units sold and credited |
+| `units` | Equal quantities sold and credited, units |
 | `code_class` | Registry class of the code (merchandise unless listed) |
-| `sale_sheet`, `sale_row`, `sale_invoice`, `sale_time`, `sale_country` | The sale line: sheet, spreadsheet row, invoice, time, country |
-| `credit_sheet`, `credit_row`, `credit_invoice`, `credit_time`, `credit_country` | The credit line |
-| `lag_minutes` | Minutes from sale to credit |
-| `prompt` | Whether the credit came within the window |
+| `sale_sheet` | Source sheet of the sale line |
+| `sale_row` | Spreadsheet row of the sale line |
+| `sale_invoice` | Sale invoice identifier |
+| `sale_time` | Sale timestamp |
+| `sale_country` | Country on the sale line |
+| `credit_sheet` | Source sheet of the credit line |
+| `credit_row` | Spreadsheet row of the credit line |
+| `credit_invoice` | Credit invoice identifier |
+| `credit_time` | Credit timestamp |
+| `credit_country` | Country on the credit line |
+| `lag_minutes` | Elapsed minutes from sale to credit |
+| `prompt` | Whether the credit arrived within the reversal window |
 
 ### `weekly_sales.csv`
 
@@ -396,6 +430,6 @@ One row per cohort product and week of the selection and evaluation years.
 | `period` | Selection or evaluation |
 | `closure` | Whether the week had no invoice in any country |
 | `sku` | Stock code |
-| `units` | Sales with every recorded reversal removed, units |
-| `units_at_week_close` | Sales as known at the end of the week, the units scored in evaluation |
-| `revenue` | Sales value, £ |
+| `units` | Sales after all recorded reversal removals, units |
+| `units_at_week_close` | Sales known at week-end, scored in evaluation, units |
+| `revenue` | Sales value after all recorded reversal removals, £ |

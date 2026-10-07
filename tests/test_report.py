@@ -109,15 +109,15 @@ class WordingTests(unittest.TestCase):
 
     def test_report_states_how_bias_intervals_and_capacity_are_read(self):
         text = report.render("insight_report.md", report.insight_values(summary()))
-        self.assertIn("(of the difference in pounds when the relative interval is undefined)", text)
+        self.assertIn("falls back to the difference in pounds only when the relative interval is undefined", text)
         self.assertIn("bias is better the closer it is to zero", text)
         self.assertNotIn("Lower is better on each", text)
-        self.assertIn("every scenario, except that the capacity sensitivities apply their own factor", text)
+        self.assertIn("every policy and scenario, except that capacity sensitivities apply their own factor", text)
 
     def test_next_week_is_dated_and_called_the_partial_week_only_when_it_is(self):
-        cases = {52: ("2011-12-05", "5 December 2011, the first after the evaluation weeks, which is also the "
-                                    "workbook's last, partial week, from"),
-                 13: ("2011-03-07", "7 March 2011, the first after the evaluation weeks, from")}
+        cases = {52: ("2011-12-05", "5 December 2011, the first week after evaluation, which is also the "
+                                    "workbook's last, partial week. Targets"),
+                 13: ("2011-03-07", "7 March 2011, the first week after evaluation. Targets")}
         for weeks, (monday, text) in cases.items():
             current = summary(weeks)
             with self.subTest(weeks=weeks):
