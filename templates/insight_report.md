@@ -57,7 +57,7 @@ Uncertainty comes from a **paired moving-block bootstrap**: both policies' weekl
 
 ## By quarter
 
-Each quarter is 13 consecutive evaluation weeks. The last columns show in which part of the year the differences in the comparison table arose.
+$quarter_sentence The last columns show in which part of the year the differences in the comparison table arose.
 
 $quarter_table
 

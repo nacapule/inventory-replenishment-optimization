@@ -10,6 +10,7 @@ from dataclasses import replace
 from fractions import Fraction
 from pathlib import Path
 from statistics import median
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
@@ -375,6 +376,23 @@ class ComparisonTests(unittest.TestCase):
         for policy, run in result.runs.items():
             self.assertAlmostEqual(quarters[policy].sum(), run.cost.sum(), places=6)
             self.assertAlmostEqual(products[f"{policy}_cost"].sum(), run.cost.sum(), places=6)
+
+    def test_quarters_are_consecutive_13_week_groups_and_the_last_may_be_shorter(self):
+        for weeks, sizes in ((13, [13]), (20, [13, 7]), (52, [13, 13, 13, 13]), (8, [8])):
+            dates = pd.date_range("2010-12-06", periods=weeks, freq="7D")
+            cost = np.arange(weeks * 3, dtype=float).reshape(weeks, 3)
+            runs = {"optimizer": SimpleNamespace(cost=cost), "proportional": SimpleNamespace(cost=2 * cost)}
+            quarters = experiment.quarters(experiment.ScenarioResult(None, 0, dates, None, runs, []))
+            firsts = [sum(sizes[:number]) for number in range(len(sizes))]
+            with self.subTest(weeks=weeks):
+                self.assertEqual(quarters["quarter"].tolist(), list(range(1, len(sizes) + 1)))
+                self.assertEqual(quarters["weeks"].tolist(), sizes)
+                self.assertEqual(list(quarters["first_week"]), [dates[first] for first in firsts])
+                self.assertEqual(list(quarters["last_week"]),
+                                 [dates[first + size - 1] for first, size in zip(firsts, sizes)])
+                for policy, run in runs.items():
+                    self.assertEqual(quarters[policy].tolist(),
+                                     [run.cost[first:first + size].sum() for first, size in zip(firsts, sizes)])
 
 
 class ForecastTests(unittest.TestCase):

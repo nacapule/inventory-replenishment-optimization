@@ -39,6 +39,7 @@ WINDOWS = {  # name: (label, weeks back to the first sample week, number of week
     "seasonal_analog": ("Same 13 weeks a year earlier", 52, 13),
 }
 PRICE_WEEKS = 52
+QUARTER_WEEKS = 13  # evaluation weeks per quarter in the results by quarter
 CLOSURES = ("drop", "zero")  # weeks without invoices: dropped from history, or kept as zeros
 BRIDGE_STEPS = {
     "original": "Published design",
@@ -456,12 +457,12 @@ def policy_summary(run: model.Simulation, capacity: int) -> dict:
     }
 
 
-def quarters(result: ScenarioResult, parts=4) -> pd.DataFrame:
-    """Each policy's modeled cost over consecutive blocks of the evaluation weeks."""
-    rows = []
-    for number, positions in enumerate(np.array_split(np.arange(len(result.weeks)), parts), 1):
-        if positions.size == 0:
-            continue
+def quarters(result: ScenarioResult) -> pd.DataFrame:
+    """Each policy's modeled cost over consecutive 13-week quarters of the evaluation weeks;
+    the last quarter holds the weeks left over and may be shorter."""
+    rows, weeks = [], len(result.weeks)
+    for number, first in enumerate(range(0, weeks, QUARTER_WEEKS), 1):
+        positions = np.arange(first, min(first + QUARTER_WEEKS, weeks))
         row = {"quarter": number, "first_week": result.weeks[positions[0]], "weeks": positions.size,
                "last_week": result.weeks[positions[-1]]}
         row.update({policy: float(run.cost[positions].sum()) for policy, run in result.runs.items()})

@@ -449,6 +449,17 @@ def _largest(summary) -> str:
     return text + " No credit matches that line under the exact-matching rule."
 
 
+def _quarters(quarters) -> str:
+    """How many weeks the quarters hold: 13 each, except a shorter last one."""
+    size, last = experiment.QUARTER_WEEKS, quarters[-1]["weeks"]
+    weeks = f"{last} week" + ("" if last == 1 else "s")
+    if last == size:
+        return f"Each quarter is {size} consecutive evaluation weeks."
+    if len(quarters) == 1:
+        return f"The evaluation is one quarter of {weeks}."
+    return f"Each quarter is {size} consecutive evaluation weeks, except the last, which has {weeks}."
+
+
 def _ratio(study) -> str:
     """The critical ratio to four places, with its exact fraction when the four places round it.
 
@@ -505,6 +516,7 @@ def insight_values(summary: dict) -> dict:
         "comparison_table": table(comparison_rows, ["Comparison", "Optimizer", "Baseline", "Difference", "Relative",
                                                     f"{level}% interval", "Interval checks",
                                                     "Weeks lower / higher"], "lrrrrrll"),
+        "quarter_sentence": _quarters(summary["quarters"]),
         "quarter_table": table(quarter_rows, ["Quarter"] + [NAMES[p] for p in feasible] + differences, "l" + numbers),
         "sku_table": table(sku_rows, ["SKU", "Sales units"] + [NAMES[p] for p in feasible] + differences,
                            "lr" + numbers),

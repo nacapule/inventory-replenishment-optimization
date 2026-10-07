@@ -107,6 +107,25 @@ class WordingTests(unittest.TestCase):
             report.write_cost_difference_figure(report.weekly_cost(synthetic.result(13).primary), NAMES, path)
             self.assertIn("(13 weeks)", path.read_text(encoding="utf-8"))
 
+    def test_quarters_are_13_weeks_and_a_shorter_last_quarter_gives_its_length(self):
+        cases = {
+            13: ("Each quarter is 13 consecutive evaluation weeks. ", ["1 (6 December 2010 to 6 March 2011)"]),
+            20: ("Each quarter is 13 consecutive evaluation weeks, except the last, which has 7 weeks. ",
+                 ["1 (6 December 2010 to 6 March 2011)", "2 (7 March 2011 to 24 April 2011)"]),
+            52: ("Each quarter is 13 consecutive evaluation weeks. ",
+                 ["1 (6 December 2010 to 6 March 2011)", "2 (7 March 2011 to 5 June 2011)",
+                  "3 (6 June 2011 to 4 September 2011)", "4 (5 September 2011 to 4 December 2011)"]),
+        }
+        for weeks, (sentence, labels) in cases.items():
+            text = report.render("insight_report.md", report.insight_values(summary(weeks)))
+            section = text.split("## By quarter\n")[1].split("\n## ")[0]
+            with self.subTest(weeks=weeks):
+                self.assertIn(sentence, section)
+                self.assertEqual(re.findall(r"^\| (\d+ \([^)]*\)) \|", section, flags=re.M), labels)
+        self.assertEqual(report._quarters([{"weeks": 8}]), "The evaluation is one quarter of 8 weeks.")
+        self.assertEqual(report._quarters([{"weeks": 13}, {"weeks": 1}]),
+                         "Each quarter is 13 consecutive evaluation weeks, except the last, which has 1 week.")
+
     def test_report_states_how_bias_intervals_and_capacity_are_read(self):
         text = report.render("insight_report.md", report.insight_values(summary()))
         self.assertIn("When the relative interval is undefined (a baseline cost of zero), the table shows n/a and the "
