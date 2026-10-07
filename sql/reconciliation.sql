@@ -8,18 +8,21 @@
 --                   (NULL when anonymous), price, quantity (NULL when invalid), t (the
 --                   timestamp in nanoseconds since 1970, NULL when missing) and country
 --   reconciliation  exports/reconciliation.csv
---   reversal_pairs  exports/reversal_pairs.csv
+--   reversal_pairs  exports/reversal_pairs.csv, its sale_time and credit_time in
+--                   nanoseconds like t
 --   weekly_sales    exports/weekly_sales.csv
---   params          window_ns (the reversal window) and country (the study's country)
+--   params          the configuration: window_ns (the reversal window), country,
+--                   skus, min_active_weeks, selection_weeks and evaluation_weeks
 --
 -- Only the ledger's row fields are loaded, not its roles or pairing columns: the roles,
--- the pairing rule and the weekly sums are worked out again here, while the row fields
--- themselves (validity, the invoice and registry flags, normalized codes) are taken as
--- src/data.py reads and normalizes them. The part before the first "-- check:" line
--- builds indexes and views; each check is one query returning the rows where a published
--- file and the ledger disagree, so an empty result is agreement. Money is compared to
--- half a penny, because sums taken in a different order can differ in the last digits;
--- counts and units are compared exactly.
+-- the pairing rule, the study weeks, the cohort and the weekly sums are worked out again
+-- here from the rules and the configuration, while the row fields themselves (validity,
+-- the invoice and registry flags, normalized codes) are taken as src/data.py reads and
+-- normalizes them. The part before the first "-- check:" line builds tables, indexes and
+-- views; each check is one query returning the rows where a published file and the ledger
+-- disagree, so an empty result is agreement. Money is compared to half a penny, because
+-- sums taken in a different order can differ in the last digits; counts, units and times
+-- are compared exactly.
 
 CREATE UNIQUE INDEX ledger_row ON ledger (sheet, source_row);
 CREATE INDEX ledger_key ON ledger (customer_id, sku, price, quantity, t);
@@ -64,16 +67,17 @@ SELECT l.sheet, l.quantity, l.price,
 FROM ledger l;
 
 -- When each published sale stops counting: its credit's timestamp.
-CREATE TEMP VIEW removal AS
+CREATE TEMP TABLE removal AS
 SELECT p.sale_sheet AS sheet, p.sale_row AS source_row, MIN(c.t) AS removed_at
 FROM reversal_pairs p
 JOIN ledger c ON c.sheet = p.credit_sheet AND c.source_row = p.credit_row
 GROUP BY p.sale_sheet, p.sale_row;
+CREATE INDEX removal_row ON removal (sheet, source_row);
 
--- The study's sales lines for the cohort (the stock codes in weekly_sales.csv): ordinary
--- invoice lines of the study's country with a positive quantity and price and a code the
--- registry keeps, each with its Monday and the time its removal becomes known, if any.
-CREATE TEMP VIEW cohort_line AS
+-- The study's sales lines: ordinary invoice lines of the study's country with a positive
+-- quantity and price and a code the registry keeps, each with its Monday and the time its
+-- removal becomes known, if any.
+CREATE TEMP VIEW study_line AS
 SELECT l.sku, l.quantity, l.price,
        date(l.t / 1000000000, 'unixepoch', '-6 days', 'weekday 1') AS week_start,
        r.removed_at
@@ -81,8 +85,54 @@ FROM ledger l
 LEFT JOIN removal r ON r.sheet = l.sheet AND r.source_row = l.source_row
 WHERE l.valid AND NOT l.overlap AND NOT l.credit AND NOT l.accounting
   AND l.quantity > 0 AND l.price > 0 AND l.code_action = 'keep'
-  AND l.country = (SELECT country FROM params)
-  AND l.sku IN (SELECT sku FROM weekly_sales);
+  AND l.country = (SELECT country FROM params);
+
+-- The study weeks: the first selection_weeks + evaluation_weeks Mondays whose whole week
+-- lies between the first and the last dated source row (complete weeks), numbered from 1;
+-- the first selection_weeks select the cohort. A closure week has no source row at all.
+CREATE TEMP TABLE study_week AS
+WITH RECURSIVE span AS (
+  SELECT date(MIN(t) / 1000000000, 'unixepoch') AS first_day,
+         date(MAX(t) / 1000000000, 'unixepoch') AS last_day
+  FROM ledger
+  WHERE NOT overlap AND t IS NOT NULL
+), monday(week_start, number) AS (
+  SELECT date(first_day, 'weekday 1'), 1 FROM span
+  UNION ALL
+  SELECT date(week_start, '+7 days'), number + 1 FROM monday
+  WHERE number < (SELECT selection_weeks + evaluation_weeks FROM params)
+), bounded AS (
+  SELECT week_start, number,
+         CAST(strftime('%s', week_start) AS INTEGER) * 1000000000 AS start_ns,
+         CAST(strftime('%s', week_start, '+7 days') AS INTEGER) * 1000000000 AS end_ns
+  FROM monday, span
+  WHERE date(week_start, '+6 days') <= last_day
+)
+SELECT week_start, number, start_ns, end_ns,
+       CASE WHEN number <= (SELECT selection_weeks FROM params) THEN 'selection' ELSE 'evaluation' END AS period,
+       NOT EXISTS (SELECT 1 FROM ledger l
+                   WHERE NOT l.overlap AND l.t >= start_ns AND l.t < end_ns) AS closed
+FROM bounded;
+
+-- The cohort: the skus stock codes with the highest selection-week revenue (ties by code)
+-- among those sold in at least min_active_weeks selection weeks, counting the sales as
+-- known when the first evaluation week starts.
+CREATE TEMP TABLE cohort AS
+WITH known AS (
+  SELECT s.sku, s.week_start, s.quantity * s.price AS revenue
+  FROM study_line s
+  JOIN study_week w ON w.week_start = s.week_start AND w.period = 'selection'
+  WHERE s.removed_at IS NULL
+     OR s.removed_at >= (SELECT MIN(start_ns) FROM study_week WHERE period = 'evaluation')
+), weekly AS (
+  SELECT sku, week_start, TOTAL(revenue) AS revenue FROM known GROUP BY sku, week_start
+)
+SELECT sku, TOTAL(revenue) AS revenue
+FROM weekly
+GROUP BY sku
+HAVING COUNT(*) >= (SELECT min_active_weeks FROM params)
+ORDER BY TOTAL(revenue) DESC, sku
+LIMIT (SELECT skus FROM params);
 
 -- check: reconciliation
 -- Rows, signed units and signed value by sheet and role, from the derived roles, against
@@ -127,9 +177,9 @@ SELECT * FROM (
              OR p.price IS NOT s.price OR p.units IS NOT s.quantity
              OR p.code_class IS NOT s.code_class
              OR p.sale_invoice IS NOT s.invoice OR p.sale_country IS NOT s.country
-             OR datetime(p.sale_time) IS NOT datetime(s.t / 1000000000, 'unixepoch')
+             OR p.sale_time IS NOT s.t
              OR p.credit_invoice IS NOT c.invoice OR p.credit_country IS NOT c.country
-             OR datetime(p.credit_time) IS NOT datetime(c.t / 1000000000, 'unixepoch')
+             OR p.credit_time IS NOT c.t
              OR NOT COALESCE(ABS(p.lag_minutes - (c.t - s.t) / 60e9) < 1e-6, 0)
              OR p.prompt IS NOT 'True'
              THEN 'the published columns differ from the ledger rows'
@@ -153,9 +203,10 @@ GROUP BY credit_sheet, credit_row
 HAVING COUNT(*) > 1;
 
 -- check: pair_maximality
--- No eligible credit left out of the pairs could still pair with an eligible sale left
--- out of them: same customer, stock code, unit price and quantity, the sale strictly
--- earlier and within the window.
+-- No eligible credit left out of the pairs could still have taken an eligible sale with its
+-- customer, stock code, unit price and quantity, strictly earlier and within the window:
+-- every such sale was already taken by a credit no later than this one. (Credits take sales
+-- in time order, so a sale left out, or taken only by a later credit, was still free.)
 SELECT c.sheet AS credit_sheet, c.source_row AS credit_row,
        s.sheet AS sale_sheet, s.source_row AS sale_row
 FROM eligible_credit c
@@ -165,8 +216,10 @@ JOIN eligible_sale s
  AND s.t < c.t AND s.t >= c.t - (SELECT window_ns FROM params)
 WHERE NOT EXISTS (SELECT 1 FROM reversal_pairs p
                   WHERE p.credit_sheet = c.sheet AND p.credit_row = c.source_row)
-  AND NOT EXISTS (SELECT 1 FROM reversal_pairs p
-                  WHERE p.sale_sheet = s.sheet AND p.sale_row = s.source_row);
+  AND NOT EXISTS (SELECT 1
+                  FROM reversal_pairs p
+                  JOIN ledger taken ON taken.sheet = p.credit_sheet AND taken.source_row = p.credit_row
+                  WHERE p.sale_sheet = s.sheet AND p.sale_row = s.source_row AND taken.t <= c.t);
 
 -- check: pair_most_recent
 -- Each credit took the most recent sale it could: every eligible sale with the pair's
@@ -188,56 +241,41 @@ WHERE NOT EXISTS (
 );
 
 -- check: weekly_sales
--- For every Monday from the first to the last week in weekly_sales.csv and every cohort
--- stock code, exactly one published row whose units are the week's sales with every
--- published pair removed, units_at_week_close those with only the removals known before
--- the next Monday, revenue the removed-pairs units times their prices, and closure true
--- exactly when the source has no row at all that week.
-WITH RECURSIVE week(week_start) AS (
-  SELECT MIN(week_start) FROM weekly_sales
-  UNION ALL
-  SELECT date(week_start, '+7 days') FROM week
-  WHERE week_start < (SELECT MAX(week_start) FROM weekly_sales)
-), closure AS (
-  SELECT week_start,
-         NOT EXISTS (
-           SELECT 1 FROM ledger l
-           WHERE NOT l.overlap
-             AND l.t >= CAST(strftime('%s', week.week_start) AS INTEGER) * 1000000000
-             AND l.t < CAST(strftime('%s', week.week_start, '+7 days') AS INTEGER) * 1000000000
-         ) AS closed
-  FROM week
-), cell AS (
-  SELECT week.week_start, cohort.sku FROM week, (SELECT DISTINCT sku FROM weekly_sales) cohort
-  UNION
-  SELECT week_start, sku FROM weekly_sales
+-- Exactly one published row for every study week and cohort code, and no other row; its
+-- period and closure flag as above; units the week's sales with every published pair
+-- removed; units_at_week_close those with only the removals known before the next Monday;
+-- revenue the remaining units times their prices.
+WITH expected AS (
+  SELECT w.week_start, w.period, w.closed, w.end_ns, c.sku FROM study_week w, cohort c
 ), published AS (
-  SELECT week_start, sku, COUNT(*) AS copies, MAX(units) AS units,
-         MAX(units_at_week_close) AS units_at_week_close, MAX(revenue) AS revenue,
-         MAX(closure) AS closure
+  SELECT week_start, sku, COUNT(*) AS copies, MAX(period) AS period, MAX(closure) AS closure,
+         MAX(units) AS units, MAX(units_at_week_close) AS units_at_week_close, MAX(revenue) AS revenue
   FROM weekly_sales
   GROUP BY week_start, sku
 ), computed AS (
-  SELECT week_start, sku,
-         SUM(CASE WHEN removed_at IS NULL THEN quantity ELSE 0 END) AS units,
-         SUM(CASE WHEN removed_at IS NULL
-                    OR removed_at >= CAST(strftime('%s', week_start, '+7 days') AS INTEGER) * 1000000000
-                  THEN quantity ELSE 0 END) AS units_at_week_close,
-         TOTAL(CASE WHEN removed_at IS NULL THEN quantity * price ELSE 0 END) AS revenue
-  FROM cohort_line
-  GROUP BY week_start, sku
+  SELECT s.week_start, s.sku,
+         SUM(CASE WHEN s.removed_at IS NULL THEN s.quantity ELSE 0 END) AS units,
+         SUM(CASE WHEN s.removed_at IS NULL OR s.removed_at >= w.end_ns
+                  THEN s.quantity ELSE 0 END) AS units_at_week_close,
+         TOTAL(CASE WHEN s.removed_at IS NULL THEN s.quantity * s.price ELSE 0 END) AS revenue
+  FROM study_line s
+  JOIN study_week w ON w.week_start = s.week_start
+  WHERE s.sku IN (SELECT sku FROM cohort)
+  GROUP BY s.week_start, s.sku
+), cell AS (
+  SELECT week_start, sku FROM expected UNION SELECT week_start, sku FROM published
 )
-SELECT x.week_start, x.sku, p.copies,
+SELECT x.week_start, x.sku, e.period AS study_period, p.copies, p.period, p.closure,
        p.units AS published_units, COALESCE(k.units, 0) AS ledger_units,
        p.units_at_week_close AS published_at_close, COALESCE(k.units_at_week_close, 0) AS ledger_at_close,
-       p.revenue AS published_revenue, COALESCE(k.revenue, 0) AS ledger_revenue,
-       p.closure AS published_closure, w.closed AS ledger_closure
+       p.revenue AS published_revenue, COALESCE(k.revenue, 0) AS ledger_revenue
 FROM cell x
+LEFT JOIN expected e ON e.week_start = x.week_start AND e.sku = x.sku
 LEFT JOIN published p ON p.week_start = x.week_start AND p.sku = x.sku
 LEFT JOIN computed k ON k.week_start = x.week_start AND k.sku = x.sku
-LEFT JOIN closure w ON w.week_start = x.week_start
-WHERE p.copies IS NOT 1 OR w.week_start IS NULL OR strftime('%w', x.week_start) IS NOT '1'
+WHERE e.sku IS NULL OR p.copies IS NOT 1
+   OR p.period IS NOT e.period
+   OR p.closure IS NOT (CASE WHEN e.closed THEN 'True' ELSE 'False' END)
    OR p.units IS NOT COALESCE(k.units, 0)
    OR p.units_at_week_close IS NOT COALESCE(k.units_at_week_close, 0)
-   OR NOT COALESCE(ABS(p.revenue - COALESCE(k.revenue, 0)) <= 0.005, 0)
-   OR p.closure IS NOT (CASE WHEN w.closed THEN 'True' ELSE 'False' END);
+   OR NOT COALESCE(ABS(p.revenue - COALESCE(k.revenue, 0)) <= 0.005, 0);
