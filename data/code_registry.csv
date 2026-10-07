@@ -1,0 +1,27 @@
+code,class,action,reason,description
+DOT,charge,exclude,Online order postage charge,DOTCOM POSTAGE
+POST,charge,exclude,Postage charge,POSTAGE
+C2,charge,exclude,Carriage charge,CARRIAGE
+C3,charge,exclude,Carriage-style charge code without a description,
+BANK CHARGES,charge,exclude,Bank fee,Bank Charges
+AMAZONFEE,charge,exclude,Marketplace fee,AMAZON FEE
+B,accounting,exclude,Bad-debt adjustment,Adjust bad debt
+D,accounting,exclude,Discount line,Discount
+S,accounting,exclude,Samples posted as a money line,SAMPLES
+ADJUST,accounting,exclude,Manual stock-value adjustment,Adjustment by john on 26/01/2010 16
+ADJUST2,accounting,exclude,Manual stock-value adjustment,Adjustment by Peter on Jun 25 2010
+CRUK,accounting,exclude,Charity commission,CRUK Commission
+TEST001,test,exclude,Test product,This is a test product.
+TEST002,test,exclude,Test product,This is a test product.
+GIFT,voucher,exclude,Gift voucher code without a description,
+GIFT_0001_10,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £10.00
+GIFT_0001_20,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £20.00
+GIFT_0001_30,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £30.00
+GIFT_0001_40,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £40.00
+GIFT_0001_50,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £50.00
+GIFT_0001_60,voucher,exclude,Gift voucher,
+GIFT_0001_70,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £70.00
+GIFT_0001_80,voucher,exclude,Gift voucher,Dotcomgiftshop Gift Voucher £80.00
+GIFT_0001_90,voucher,exclude,Gift voucher,
+M,manual,quarantine,Manual entry; the item cannot be identified,Manual
+PADS,manual,quarantine,Unidentified accessory with irregular pricing,PADS TO MATCH ALL CUSHIONS
